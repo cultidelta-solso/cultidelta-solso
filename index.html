@@ -7,6 +7,8 @@
 <meta http-equiv="Expires" content="0">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Cultidelta — Localitzador · Solsó</title>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@300;400;600&display=swap');
   :root{--verd:#0F6E56;--verd-mid:#1D9E75;--verd-clar:#E1F5EE;--ambre:#FAEEDA;--vermell:#C0392B;--vermell-clar:#FCEBEB;--gf:#1a1a1a;--gm:#4a4a4a;--gc:#f0f0f0}
@@ -295,7 +297,7 @@
 
 <div class="notif" id="notif"></div>
 
-<script type="module">
+<script>
 const SECTORS_H1 = [
   {id:'H1-S1',nom:'H1 Sector 1',color:'#1a7a5e',pts:'1347.9,389.9 1461.1,351.2 1466.0,365.6 1352.6,404.4',cx:1406.9,cy:377.8},
   {id:'H1-S11',nom:'H1 Sector 11',color:'#7a5e1a',pts:'1461.1,351.2 1574.4,312.6 1579.4,326.8 1466.0,365.6',cx:1520.2,cy:339.1},
@@ -357,10 +359,8 @@ let lots = [];
 let stockAsignacions = {};
 let fbCarregat = false;
 
-// ── FIREBASE ──────────────────────────────────────────────
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getDatabase, ref, set, onValue, push, remove, update } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
-
+// ── FIREBASE (globals via compat SDK) ─────────────────────
+// Les llibreries es carreguen via <script> al <head>
 const firebaseConfig = {
   apiKey: "AIzaSyCo_zakwYpNCPeOjL-rHr9MsNlPt3rW82c",
   authDomain: "cultidelta-solso.firebaseapp.com",
@@ -370,12 +370,18 @@ const firebaseConfig = {
   messagingSenderId: "458793981674",
   appId: "1:458793981674:web:8895f2b8e82216b2fde993"
 };
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
 
-const fbApp = initializeApp(firebaseConfig);
-const db = getDatabase(fbApp);
+function fbRef(path) { return db.ref(path); }
+function fbSet(path, val) { return db.ref(path).set(val); }
+function fbPush(path, val) { return db.ref(path).push(val); }
+function fbRemove(path) { return db.ref(path).remove(); }
+function fbUpdate(path, val) { return db.ref(path).update(val); }
+function fbOn(path, cb) { db.ref(path).on('value', cb); }
 
 // Escoltadors en temps real
-onValue(ref(db, 'lots'), (snap) => {
+fbOn('lots', (snap) => {
   lots = [];
   snap.forEach(child => {
     lots.push({...child.val(), _fbKey: child.key});
@@ -393,7 +399,7 @@ onValue(ref(db, 'lots'), (snap) => {
   }
 });
 
-onValue(ref(db, 'sectors_extra'), (snap) => {
+fbOn('sectors_extra', (snap) => {
   extra = [];
   snap.forEach(child => {
     extra.push({...child.val(), _fbKey: child.key});
@@ -403,13 +409,13 @@ onValue(ref(db, 'sectors_extra'), (snap) => {
   render();
 });
 
-onValue(ref(db, 'stock_asig'), (snap) => {
+fbOn('stock_asig', (snap) => {
   stockAsignacions = snap.val() || {};
 });
 
-onValue(ref(db, 'esp_noves'), (snap) => {
-  const espNoves = snap.val() ? Object.values(snap.val()) : [];
-  espNoves.forEach(v => {
+fbOn('esp_noves', (snap) => {
+  const vals = snap.val() ? Object.values(snap.val()) : [];
+  vals.forEach(v => {
     if (!totsOpcions.some(o => o.val === v)) {
       totsOpcions.push({ val: v, txt: v, grp: '★ Espècies noves' });
       afegirOpcioSelects(v);
@@ -659,7 +665,7 @@ function executarReassigna(){
   if(!ori||!dst) return;
   let canvis=0;
   // Moure tots els lots manuals
-  lots.forEach(l=>{if(l.sector===ori && l._fbKey){update(ref(db,'lots/'+l._fbKey),{sector:dst});canvis++;}});
+  lots.forEach(l=>{if(l.sector===ori && l._fbKey){fbUpdate('lots/'+l._fbKey, {sector:dst});canvis++;}});
   // Moure tot el stock assignat
   Object.keys(stockAsignacions).forEach(nom=>{
     const asigs=stockAsignacions[nom];
@@ -671,7 +677,7 @@ function executarReassigna(){
       }
     });
   });
-  set(ref(db,'stock_asig'), stockAsignacions);
+  fbSet('stock_asig', stockAsignacions);
   tancarReassigna();
   render(); actualitzarResum();
   notif(canvis>0?`✓ Reassignat de ${ori} → ${dst} (${canvis} element${canvis>1?'s':''})`:`ℹ️ Cap contingut mogut`);
@@ -707,7 +713,7 @@ function confirmarMou(sectorDst){
   const dstIdx=stockAsignacions[nom].findIndex(a=>a.sector===sectorDst);
   if(dstIdx>=0) stockAsignacions[nom][dstIdx].unitats+=unitats;
   else stockAsignacions[nom].push({sector:sectorDst, unitats});
-  set(ref(db,'stock_asig'), stockAsignacions);
+  fbSet('stock_asig', stockAsignacions);
   mouContext=null; mode='v';
   document.getElementById('iz').textContent='Fes clic a un sector de H1 o H4 per veure el contingut';
   render(); actualitzarResum();
@@ -756,7 +762,7 @@ function tancarPD(){document.getElementById('pd').classList.remove('open');}
 function delLot(id){
   if(!confirm('Eliminar aquest lot?'))return;
   const lotObj = lots.find(l=>l.lot===id);
-  if(lotObj && lotObj._fbKey) remove(ref(db, 'lots/' + lotObj._fbKey));
+  if(lotObj && lotObj._fbKey) fbRemove('lots/' + lotObj._fbKey);
   obrirPD();
 }
 
@@ -864,7 +870,7 @@ function guardar(){
     obs:document.getElementById('fo').value.trim(),
   };
   if(!lot.especie||!lot.sector||!lot.unitats){notif('⚠️ Omple: Espècie, Sector i Unitats');return;}
-  push(ref(db, 'lots'), lot);
+  fbPush('lots', lot);
   ['fl','fg2-filter','fg2-val','fo'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('fu').value='';document.getElementById('fse').value='';
   document.getElementById('ff').value='';document.getElementById('fd').value=new Date().toISOString().split('T')[0];
@@ -884,7 +890,7 @@ function nsEnd(e){
   const nId=nom.trim().toUpperCase();
   const pts=`${x},${y} ${x+w},${y} ${x+w},${y+h} ${x},${y+h}`;
   const nou={id:nId,nom:'Sector '+nId,color:GEXTRA[extra.length%GEXTRA.length],pts,cx:x+w/2,cy:y+h/2};
-  push(ref(db, 'sectors_extra'), nou);
+  fbPush('sectors_extra', nou);
   actualitzarSelects();actualitzarResum();render();notif('✓ Sector '+nId+' creat');
 }
 
@@ -962,7 +968,7 @@ function afegirEspecieNova() {
   const jaExisteix = totsOpcions.some(o => o.val.toLowerCase() === v.toLowerCase());
   if (jaExisteix) { notif('Aquesta espècie ja és al catàleg'); return; }
   // Afegir a Firebase
-  push(ref(db, 'esp_noves'), v);
+  fbPush('esp_noves', v);
   // Afegir a totsOpcions per filtrar
   totsOpcions.push({ val: v, txt: v, grp: '★ Espècies noves' });
   // Afegir als selects de cerca
@@ -1153,7 +1159,7 @@ function confirmarReparticio(nom, safeId) {
   const avui = new Date().toISOString().split('T')[0];
   const formatNom = nom.match(/(AF\s*\d+\s*cc|CT\s*[\d,]+\s*L|AH\s*\d+)/i)?.[0] || '';
   rep.forEach(r => {
-    push(ref(db, 'lots'), {
+    fbPush('lots', {
       lot: 'MIC-' + Date.now() + '-' + Math.random().toString(36).slice(2,5),
       especie: nom,
       format: formatNom,
@@ -1166,7 +1172,7 @@ function confirmarReparticio(nom, safeId) {
   // Desar assignacions
   if (!stockAsignacions[nom]) stockAsignacions[nom] = [];
   rep.forEach(r => stockAsignacions[nom].push({ sector: r.sector, unitats: r.unitats }));
-  set(ref(db,'stock_asig'), stockAsignacions);
+  fbSet('stock_asig', stockAsignacions);
   // Netejar repartició en curs
   delete reparticionsActuals[nom];
   render(); actualitzarResum();
