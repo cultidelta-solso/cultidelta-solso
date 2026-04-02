@@ -452,13 +452,6 @@ function render(){
     sv.appendChild(g);
   });
   // Línia de separació central H1
-  const pts=SEP_LINE.split(' ');
-  const ln=document.createElementNS('http://www.w3.org/2000/svg','line');
-  ln.setAttribute('x1',pts[0].split(',')[0]);ln.setAttribute('y1',pts[0].split(',')[1]);
-  ln.setAttribute('x2',pts[1].split(',')[0]);ln.setAttribute('y2',pts[1].split(',')[1]);
-  ln.setAttribute('class','sep-line');
-  sv.appendChild(ln);
-
   // ── H4 zona exterior ──────────────────────────────────────
   const ol4=document.createElementNS('http://www.w3.org/2000/svg','polygon');
   ol4.setAttribute('points',H4_OUTLINE);ol4.setAttribute('class','h1-ol');sv.appendChild(ol4);
@@ -469,15 +462,6 @@ function render(){
   lbl4.setAttribute('text-anchor','middle');lbl4.setAttribute('paint-order','stroke');
   lbl4.setAttribute('stroke','white');lbl4.setAttribute('stroke-width','3');lbl4.setAttribute('pointer-events','none');
   lbl4.textContent='H4 — ZONA EXTERIOR';sv.appendChild(lbl4);
-  // H4 corredor horitzontal
-  [H4_CORR_T, H4_CORR_B].forEach(function(lineStr){
-    if(!lineStr) return;
-    var p=lineStr.split(' ');
-    var l=document.createElementNS('http://www.w3.org/2000/svg','line');
-    l.setAttribute('x1',p[0].split(',')[0]);l.setAttribute('y1',p[0].split(',')[1]);
-    l.setAttribute('x2',p[1].split(',')[0]);l.setAttribute('y2',p[1].split(',')[1]);
-    l.setAttribute('class','sep-line');sv.appendChild(l);
-  });
   // Mode edició
   if(mode==='e') sv.classList.add('ed');
   else sv.classList.remove('ed');
