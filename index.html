@@ -6,6 +6,13 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Solsó">
+<meta name="theme-color" content="#0F6E56">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
 <title>Cultidelta — Localitzador · Solsó</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@300;400;600&display=swap');
@@ -115,6 +122,34 @@
   .stock-empty{text-align:center;color:#888;font-size:.78rem;font-style:italic;padding:20px 0}
   ::-webkit-scrollbar{width:4px;height:4px}
   ::-webkit-scrollbar-thumb{background:#ccc;border-radius:2px}
+
+  /* ── MÒBIL ────────────────────────────────────────────── */
+  @media (max-width: 700px) {
+    header{padding:8px 14px;gap:10px}
+    header h1{font-size:.78rem}
+    .logo{font-size:1.1rem}
+    /* Layout vertical: plànol a dalt, panel a baix */
+    .app{flex-direction:column;height:calc(100vh - 44px)}
+    .sb{width:100%;min-width:unset;border-right:none;border-top:2px solid #eee;
+        height:42vh;min-height:200px;max-height:55vh;order:2;flex-shrink:0}
+    .pa{order:1;flex:1;min-height:0}
+    /* Tabs més grans per dits */
+    .tabs{gap:0}
+    .tb{padding:10px 4px;font-size:.68rem}
+    /* Panel lateral dret (detall sector) ocupa tota la pantalla en mòbil */
+    .pd{width:100%;border-left:none;border-top:1px solid #ddd}
+    /* Popup centrat en mòbil */
+    .pop{left:50%!important;top:50%!important;transform:translate(-50%,-50%);
+         width:min(320px,92vw);max-height:70vh}
+    /* Controls de zoom més grans */
+    .zc button{width:38px;height:38px;font-size:1.1rem}
+    /* Info bar */
+    .iz{font-size:.68rem;padding:5px 10px}
+    /* Selects cerca més compactes */
+    .cerca-select{height:90px}
+    /* Modal reassignació */
+    #modal-reassigna > div{width:96vw!important;max-height:92vh!important}
+  }
 </style>
 </head>
 <body>
@@ -489,10 +524,16 @@ function mostrarPop(id,event){
   if(pf) pf.style.display=teCont?'block':'none';
   const pop=document.getElementById('pop');
   pop._sectorId=id;
-  let px=event.clientX+10,py=event.clientY-10;
-  if(px+285>window.innerWidth)px=event.clientX-287;
-  if(py+310>window.innerHeight)py=window.innerHeight-320;
-  pop.style.left=px+'px';pop.style.top=py+'px';pop.classList.add('vis');
+  // En mòbil el popup es centra via CSS, en escriptori segueix el cursor
+  if(window.innerWidth>700){
+    let px=event.clientX+10,py=event.clientY-10;
+    if(px+285>window.innerWidth)px=event.clientX-287;
+    if(py+310>window.innerHeight)py=window.innerHeight-320;
+    pop.style.left=px+'px';pop.style.top=py+'px';
+  } else {
+    pop.style.left='';pop.style.top='';
+  }
+  pop.classList.add('vis');
 }
 function tancarPop(){document.getElementById('pop').classList.remove('vis');}
 
@@ -1044,6 +1085,52 @@ function parsearCSVMicgestio(text, filename) {
   cercarStock();
 }
 
+</script>
+
+<!-- Suport tàctil mòbil: pan i pinch-zoom -->
+<script>
+(function(){
+  const pw = document.getElementById('pw');
+  let lastDist = null, lastX = null, lastY = null, touching = false;
+
+  pw.addEventListener('touchstart', e => {
+    touching = true;
+    if (e.touches.length === 2) {
+      lastDist = Math.hypot(
+        e.touches[0].clientX - e.touches[1].clientX,
+        e.touches[0].clientY - e.touches[1].clientY
+      );
+    } else if (e.touches.length === 1) {
+      lastX = e.touches[0].clientX;
+      lastY = e.touches[0].clientY;
+    }
+  }, {passive: true});
+
+  pw.addEventListener('touchmove', e => {
+    if (e.touches.length === 2) {
+      e.preventDefault();
+      const dist = Math.hypot(
+        e.touches[0].clientX - e.touches[1].clientX,
+        e.touches[0].clientY - e.touches[1].clientY
+      );
+      if (lastDist) zoom(dist / lastDist);
+      lastDist = dist;
+    } else if (e.touches.length === 1 && lastX !== null) {
+      e.preventDefault();
+      const dx = e.touches[0].clientX - lastX;
+      const dy = e.touches[0].clientY - lastY;
+      pw.scrollLeft -= dx;
+      pw.scrollTop -= dy;
+      lastX = e.touches[0].clientX;
+      lastY = e.touches[0].clientY;
+    }
+  }, {passive: false});
+
+  pw.addEventListener('touchend', e => {
+    if (e.touches.length < 2) lastDist = null;
+    if (e.touches.length === 0) { lastX = null; lastY = null; }
+  }, {passive: true});
+})();
 </script>
 
 <!-- Firebase al final per no bloquejar funcions globals -->
