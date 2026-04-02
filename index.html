@@ -769,7 +769,9 @@ function cercarPerEspecie(){
   // 2) Resultats de stock MicGestió assignat
   let resStock=[];
   Object.entries(stockAsignacions).forEach(([nom,asigs])=>{
-    const mEsp=esp?nom===esp:true;
+    // esp és el nom d'espècie del catàleg (p.ex. "Iris pallida")
+    // nom és l'article complet (p.ex. "Iris pallida CT 2 L")
+    const mEsp=esp?(nom===esp||nom.startsWith(esp+' ')||nom.startsWith(esp+'"')):true;
     if(!mEsp)return;
     asigs.forEach(a=>{
       const mSec=fs?a.sector===fs:true;
@@ -928,7 +930,9 @@ function cercarStock() {
   if (!matches.length) { div.innerHTML = '<div class="stock-empty">Cap resultat</div>'; return; }
   let html = `<div style="font-size:.69rem;color:#4a4a4a;margin-bottom:6px">${matches.length}${matches.length===25?'+':''} resultats</div>`;
   matches.forEach(([nom, v]) => {
-    const safeId = btoa(encodeURIComponent(nom)).replace(/[^a-zA-Z0-9]/g,'').slice(0,20);
+    // safeId: hash numèric simple per evitar problemes amb btoa i caràcters especials
+    let h=0; for(let i=0;i<nom.length;i++){h=(h*31+nom.charCodeAt(i))&0xfffffff;}
+    const safeId='s'+h.toString(36);
     const asig = stockAsignacions[nom] || [];
     // Unitats ja assignades definitivament
     const utAssignades = asig.reduce((a,x)=>a+x.unitats,0);
