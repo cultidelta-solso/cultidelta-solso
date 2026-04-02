@@ -389,7 +389,15 @@ window.addEventListener('load',()=>{
   ajustarSVG();
   // fd eliminat (formulari +Lot suprimit)
   const sel = document.getElementById('sel-esp');
-  totsOpcions = Array.from(sel.querySelectorAll('option')).map(o=>{return {val:o.value,txt:o.textContent,grp:o.parentElement.label||''}});
+  totsOpcions = Array.from(sel.querySelectorAll('option')).map(o=>{return {val:o.value,txt:o.textContent,grp:o.parentElement.label||''};});
+  // Listeners permanents per dibuixar sectors (mode 'e')
+  const sv = document.getElementById('sv');
+  sv.addEventListener('mousedown', e=>{if(mode==='e')nsStart(e);});
+  sv.addEventListener('mousemove', e=>{if(mode==='e')nsMove(e);});
+  sv.addEventListener('mouseup',   e=>{if(mode==='e')nsEnd(e);});
+  sv.addEventListener('touchstart',e=>{if(mode==='e')nsTStart(e);},{passive:false});
+  sv.addEventListener('touchmove', e=>{if(mode==='e')nsTMove(e);},{passive:false});
+  sv.addEventListener('touchend',  e=>{if(mode==='e')nsTEnd(e);},{passive:false});
   // Firebase s'encarrega de carregar lots, sectors i espècies
   setTimeout(()=>{
     const img=document.getElementById('pi'),pw=document.getElementById('pw');
@@ -473,8 +481,8 @@ function render(){
     l.setAttribute('class','sep-line');sv.appendChild(l);
   });
   // Mode edició
-  if(mode==='e'){sv.classList.add('ed');sv.addEventListener('mousedown',nsStart);sv.addEventListener('mousemove',nsMove);sv.addEventListener('mouseup',nsEnd);}
-  else{sv.classList.remove('ed');sv.removeEventListener('mousedown',nsStart);sv.removeEventListener('mousemove',nsMove);sv.removeEventListener('mouseup',nsEnd);}
+  if(mode==='e') sv.classList.add('ed');
+  else sv.classList.remove('ed');
   if(mode==='c'){
     sv.classList.add('ed');
     sv._coordClick=function(e){
@@ -803,6 +811,10 @@ function ressaltar(id){
 }
 
 // ── FORMULARI NOU LOT ─────────────────────────────────────
+function nsTStart(e){e.preventDefault();if(e.touches.length!==1)return;const t=e.touches[0];nsStart({clientX:t.clientX,clientY:t.clientY});}
+function nsTMove(e){e.preventDefault();if(e.touches.length!==1)return;const t=e.touches[0];nsMove({clientX:t.clientX,clientY:t.clientY});}
+function nsTEnd(e){e.preventDefault();const t=e.changedTouches[0];nsEnd({clientX:t.clientX,clientY:t.clientY});}
+
 // ── NOU SECTOR ────────────────────────────────────────────
 function setMode(m){mode=m;document.getElementById('bv').classList.toggle('actiu',m==='v');document.getElementById('be').classList.toggle('actiu',m==='e');document.getElementById('iz').textContent=m==='v'?'Fes clic a un sector de H1':'✏️ Dibuixa un rectangle per afegir nou sector';render();tancarPop();}
 function svgPt(e){const sv=document.getElementById('sv'),pt=sv.createSVGPoint();pt.x=e.clientX;pt.y=e.clientY;return pt.matrixTransform(sv.getScreenCTM().inverse());}
