@@ -154,6 +154,11 @@
   .notif{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:var(--gf);color:white;padding:8px 17px;border-radius:17px;font-size:.79rem;z-index:2000;opacity:0;transition:opacity .3s;pointer-events:none}
   .notif.vis{opacity:1}
 
+  .aq-it{padding:5px 7px;border-radius:4px;cursor:pointer;border:1px solid #eee;margin-bottom:4px;background:white}
+  .aq-it:hover{background:#e8f4f0;border-color:#1D9E75}
+  .aq-n{font-size:.77rem;font-weight:600;font-style:italic}
+  .aq-u{font-size:.67rem;color:#777;font-family:'IBM Plex Mono',monospace}
+  .aq-sel{border:1.5px solid #1D9E75;border-radius:5px;padding:6px 7px;background:#f3fbf8}
   .stock-anar{cursor:pointer}
   .stock-anar:hover{background:#c8ecdf}
   .bs2{flex:1;background:#f0f0f0;color:#444;border:1.5px dashed #ccc;border-radius:4px;padding:5px 10px;font-size:.75rem;cursor:pointer;font-family:'IBM Plex Sans',sans-serif}
@@ -249,7 +254,7 @@
 <header>
   <div class="logo">CULTI<span>DELTA</span></div>
   <h1>Localitzador de Plantes · Zona Solsó</h1>
-  <div class="badge" id="badge">H1–H7 · v5.23</div>
+  <div class="badge" id="badge">H1–H7 · v5.24</div>
 </header>
 <div class="app">
   <div class="sb">
@@ -354,12 +359,25 @@
   <div class="pf">
     <button class="bs" style="flex:1" onclick="obrirPD()">Detall sector</button>
   </div>
-  <div id="pf-extra" style="display:none;padding:0 13px 8px;gap:6px">
-    <button class="bs" style="flex:1" onclick="renombrarSector()">✎ Canviar nom</button>
-    <button class="bs" style="flex:1;color:var(--vermell);border-color:var(--vermell)" onclick="eliminarSector()">🗑 Eliminar sector</button>
+  <div style="padding:0 13px 8px">
+    <button class="bs3" style="width:100%" onclick="obrirAfegirAqui()">＋ Afegir planta aquí</button>
   </div>
-  <div id="pf-delpas" style="display:none;padding:0 13px 8px">
-    <button class="bs" style="width:100%;color:var(--vermell);border-color:var(--vermell)" onclick="eliminarPas()"></button>
+  <div id="pf-afegir" style="display:none;padding:0 13px 9px">
+    <input type="search" id="aq-cerca" placeholder="Cerca l'article…" autocomplete="off" oninput="aqCercar()"
+      style="width:100%;padding:6px 8px;border:1.5px solid #ddd;border-radius:5px;font-size:.79rem;font-family:'IBM Plex Sans',sans-serif;outline:none">
+    <div id="aq-res" style="max-height:190px;overflow-y:auto;margin-top:5px"></div>
+  </div>
+  <div id="pf-opc" style="display:none;padding:0 13px 9px">
+    <button class="bs" style="width:100%;font-size:.7rem;color:#777" onclick="commutaOpcSector()">⚙ Opcions del sector</button>
+    <div id="pf-opc-box" style="display:none;margin-top:6px">
+      <div id="pf-extra" style="display:none;gap:6px">
+        <button class="bs" style="flex:1" onclick="renombrarSector()">✎ Canviar nom</button>
+        <button class="bs" style="flex:1;color:var(--vermell);border-color:var(--vermell)" onclick="eliminarSector()">🗑 Eliminar sector</button>
+      </div>
+      <div id="pf-delpas" style="display:none;margin-top:6px">
+        <button class="bs" style="width:100%;color:var(--vermell);border-color:var(--vermell)" onclick="eliminarPas()"></button>
+      </div>
+    </div>
   </div>
   <div id="pf-reassigna" style="display:none;padding:6px 11px 10px">
     <button onclick="obrirReassigna()" style="width:100%;background:#7c3aed;color:white;border:none;border-radius:6px;padding:7px;font-size:.8rem;font-weight:600;cursor:pointer">
@@ -556,7 +574,7 @@ let _tConn=null;
 function posarConn(ok){
   const b=document.getElementById('badge');
   clearTimeout(_tConn);
-  if(ok){b.classList.remove('off');b.textContent='H1–H7 · v5.23';return;}
+  if(ok){b.classList.remove('off');b.textContent='H1–H7 · v5.24';return;}
   _tConn=setTimeout(()=>{b.classList.add('off');b.textContent='⚠ Sense connexió';},3000);
 }
 function stockDeSector(id){const r=[];Object.entries(stockAsignacions).forEach(([nom,asigs])=>{asigs.forEach(a=>{if(a.sector===id)r.push({nom,unitats:a.unitats});});});return r;}
@@ -1392,12 +1410,14 @@ function omplirPop(id){
   // Botó reassignar al footer del popup
   const pf=document.getElementById('pf-reassigna');
   if(pf) pf.style.display=teCont?'block':'none';
-  // Els sectors creats a mà (desats a Firebase) es poden renombrar i eliminar
+  // Els sectors creats a mà (desats a Firebase) es poden renombrar i eliminar.
+  // Van plegats dins «Opcions del sector» perquè no s'hi toqui sense voler des del mòbil.
   document.getElementById('pf-extra').style.display=s._fbKey?'flex':'none';
   const nPas=s.pas?extra.filter(x=>x.pas===s.pas).length:0;
   const dp=document.getElementById('pf-delpas');
   dp.style.display=nPas>1?'block':'none';
   if(nPas>1) dp.querySelector('button').textContent=`🗑 Eliminar sector ${s.pas} (${nPas} passadissos)`;
+  document.getElementById('pf-opc').style.display=(s._fbKey||nPas>1)?'block':'none';
 }
 function eliminarPas(){
   if(!potDesar())return;
@@ -1434,6 +1454,8 @@ function mostrarPop(id,event){
   omplirPop(id);
   const pop=document.getElementById('pop');
   pop._sectorId=id;
+  document.getElementById('pf-opc-box').style.display='none';
+  document.getElementById('pf-afegir').style.display='none';
   // En mòbil el popup es centra via CSS, en escriptori segueix el cursor
   if(window.innerWidth>700){
     let px=event.clientX+10,py=event.clientY-10;
@@ -1468,7 +1490,73 @@ function treureAsig(sector,nom){
   desarAsig([nom]);
   notif(`✓ Tret de ${sector}`);
 }
-function tancarPop(){document.getElementById('pop').classList.remove('vis');}
+function tancarPop(){
+  document.getElementById('pop').classList.remove('vis');
+  document.getElementById('pf-afegir').style.display='none';
+  document.getElementById('pf-opc-box').style.display='none';
+}
+function commutaOpcSector(){
+  const b=document.getElementById('pf-opc-box');
+  b.style.display=b.style.display==='block'?'none':'block';
+}
+
+// ── AFEGIR UNA PLANTA DES DEL PASSADÍS ────────────────────
+// El sector ja se sap (hi ets o n'has llegit el QR): només cal l'article i les unitats.
+let aqArticle=null;
+function aqSector(){return document.getElementById('pop')._sectorId;}
+function obrirAfegirAqui(){
+  const d=document.getElementById('pf-afegir'),obert=d.style.display==='block';
+  d.style.display=obert?'none':'block';
+  if(obert)return;
+  aqArticle=null;
+  document.getElementById('aq-cerca').value='';
+  document.getElementById('aq-res').innerHTML='<div style="font-size:.72rem;color:#888;padding:4px 2px">Escriu el nom de la planta (p. ex. «lav ct 2»)</div>';
+  setTimeout(()=>document.getElementById('aq-cerca').focus(),60);
+}
+function aqCercar(){
+  aqArticle=null;
+  const q=norm(document.getElementById('aq-cerca').value.trim()),ps=q.split(/\s+/).filter(Boolean);
+  const res=document.getElementById('aq-res');
+  if(q.length<2){res.innerHTML='<div style="font-size:.72rem;color:#888;padding:4px 2px">Escriu almenys 2 lletres</div>';return;}
+  const l=Object.keys(STOCK_DATA).filter(n=>{const x=norm(n);return ps.every(p=>x.includes(p));}).sort((a,b)=>a.localeCompare(b,'ca')).slice(0,15);
+  if(!l.length){res.innerHTML='<div style="font-size:.72rem;color:#888;padding:4px 2px">Cap article</div>';return;}
+  res.innerHTML=l.map(n=>{
+    const ll=STOCK_DATA[n].total-utAssignadesDe(n);
+    return `<div class="aq-it" onclick="aqTriar(${jsq(n)})"><div class="aq-n">${esc(n)}</div>
+      <div class="aq-u">${ll>0?ll.toLocaleString()+' ut. sense ubicar':'tot ubicat ('+STOCK_DATA[n].total.toLocaleString()+' ut.)'}</div></div>`;
+  }).join('');
+}
+function aqTriar(nom){
+  aqArticle=nom;
+  const ll=Math.max(0,STOCK_DATA[nom].total-utAssignadesDe(nom));
+  document.getElementById('aq-res').innerHTML=`<div class="aq-sel">
+      <div class="aq-n">${esc(nom)}</div>
+      <div class="aq-u">${ll.toLocaleString()} ut. sense ubicar</div>
+      <div style="display:flex;gap:5px;align-items:center;margin-top:6px">
+        <input type="number" id="aq-ut" min="1" value="${ll||''}" placeholder="ut."
+          style="width:84px;padding:5px 7px;border:1.5px solid #ddd;border-radius:4px;font-size:.78rem;outline:none">
+        <button class="bs3" style="flex:1" onclick="aqAfegir()">✓ Afegir a ${esc(etiquetaLlarga(aqSector()))}</button>
+        <button class="bs" onclick="aqCercar()" title="Tria un altre article">↩</button>
+      </div></div>`;
+  setTimeout(()=>{const i=document.getElementById('aq-ut');if(i){i.focus();i.select();}},60);
+}
+function aqAfegir(){
+  const sec=aqSector();
+  if(!aqArticle||!sec)return;
+  const u=parseInt(document.getElementById('aq-ut').value)||0;
+  if(u<=0){notif('⚠️ Posa les unitats');return;}
+  const v=STOCK_DATA[aqArticle],ja=utAssignadesDe(aqArticle);
+  if(v&&ja+u>v.total){notif(`⚠️ Només queden ${(v.total-ja).toLocaleString()} ut. sense ubicar`);return;}
+  if(!potDesar())return;
+  if(!stockAsignacions[aqArticle])stockAsignacions[aqArticle]=[];
+  const e=stockAsignacions[aqArticle].find(a=>a.sector===sec);
+  if(e)e.unitats+=u; else stockAsignacions[aqArticle].push({sector:sec,unitats:u});
+  const nom=aqArticle;
+  aqArticle=null;
+  document.getElementById('pf-afegir').style.display='none';
+  desarAsig([nom]);
+  notif(`✓ ${u.toLocaleString()} ut. de ${nom.split(' ').slice(0,2).join(' ')} a ${etiquetaLlarga(sec)}`);
+}
 
 // ── MODAL REASSIGNACIÓ VISUAL ─────────────────────────────
 function obrirReassigna(){
