@@ -154,6 +154,11 @@
   .notif{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:var(--gf);color:white;padding:8px 17px;border-radius:17px;font-size:.79rem;z-index:2000;opacity:0;transition:opacity .3s;pointer-events:none}
   .notif.vis{opacity:1}
 
+  .stock-anar{cursor:pointer}
+  .stock-anar:hover{background:#c8ecdf}
+  .bs2{flex:1;background:#f0f0f0;color:#444;border:1.5px dashed #ccc;border-radius:4px;padding:5px 10px;font-size:.75rem;cursor:pointer;font-family:'IBM Plex Sans',sans-serif}
+  .bs2:hover{border-color:#1D9E75;color:#0F6E56}
+  .bs3{background:#0F6E56;color:white;border:none;border-radius:4px;padding:5px 12px;font-size:.75rem;font-weight:600;cursor:pointer;font-family:'IBM Plex Sans',sans-serif}
   .stock-item{padding:7px 9px;border-radius:5px;border:1px solid #eee;margin-bottom:5px;background:white}
   .stock-item:hover{border-color:#1D9E75;background:#f9fffe}
   .stock-nom{font-weight:600;font-size:.81rem;font-style:italic;margin-bottom:3px}
@@ -244,34 +249,27 @@
 <header>
   <div class="logo">CULTI<span>DELTA</span></div>
   <h1>Localitzador de Plantes · Zona Solsó</h1>
-  <div class="badge" id="badge">H1–H7 · v5.22</div>
+  <div class="badge" id="badge">H1–H7 · v5.23</div>
 </header>
 <div class="app">
   <div class="sb">
     <div class="tabs">
       <button class="tb active" onclick="tab('cerca')">🔍 Cerca</button>
       <button class="tb" onclick="tab('resum')">📊 Resum</button>
-      <button class="tb" onclick="tab('stock')">📦 Stock</button>
     </div>
-    <!-- CERCA -->
+    <!-- CERCA (cerca, localitza i ubica: abans Cerca + Stock) -->
     <div class="tc active" id="tab-cerca">
       <div class="fg">
-        <label>Filtra per nom</label>
-        <input type="text" class="cerca-filter" id="ic" placeholder="Escriu per filtrar..." oninput="filtrarSelect()">
-      </div>
-      <div class="fg">
-        <label>Selecciona espècie del stock</label>
-        <select class="cerca-select" id="sel-esp" size="7" onchange="cercarPerEspecie()">
-          <option value="">— Selecciona espècie —</option>
-        </select>
+        <label>Cerca planta o article</label>
+        <input type="search" class="cerca-filter" id="ic" placeholder="Ex: Lavandula, Cistus CT 2 L…" oninput="cercaDiferida()" autocomplete="off">
       </div>
       <div class="fg">
         <label>Filtrar per sector</label>
-        <select id="fs" onchange="cercarPerEspecie()"><option value="">— Tots —</option></select>
+        <select id="fs" onchange="cercar()"><option value="">— Tots —</option></select>
       </div>
-      <div id="rr"><div class="empty">Selecciona una espècie per localitzar-la</div></div>
+      <div id="rr"><div class="empty">Escriu el nom d'una planta per localitzar-la</div></div>
       <div class="div"></div>
-      <div class="hint"><strong>💡 Com funciona</strong>Escriu per filtrar les espècies del stock → selecciona'n una → els sectors on és s'il·luminen. Clic a un sector per veure, editar, moure o treure el contingut.</div>
+      <div class="hint"><strong>💡 Com funciona</strong>Escriu una part del nom (p. ex. «lav CT 2») → els sectors on hi ha la planta s'il·luminen. Clica un 📍 per anar al passadís, o «＋ Ubicar» per posar unitats sense ubicar en un passadís.</div>
     </div>
     <!-- (tab-lot eliminat: s'usa exclusivament stock MicGestió) -->
     <!-- RESUM -->
@@ -284,30 +282,17 @@
       <button class="bs" style="width:100%;margin-bottom:10px" onclick="obrirPlaques()">🏷 Plaques dels cartells (amb QR)</button>
       <div class="rc" id="rc"></div>
       <div id="rs"></div>
+      <div class="div" style="margin:10px 0"></div>
+      <div style="background:#e8f4f0;border:1px solid #1D9E75;border-radius:6px;padding:9px 11px;font-size:.74rem;color:#0F6E56;margin-bottom:6px;">
+        <strong style="display:block;font-size:.7rem;text-transform:uppercase;letter-spacing:.05em;margin-bottom:3px">📦 Stock MicGestió</strong>
+        Actualitzat: <strong id="stock-date">31/03/2026</strong> · <span id="stock-count">1.401</span> articles · AG+PR (ME exclòs)
+      </div>
+      <label style="display:flex;align-items:center;justify-content:center;gap:6px;background:#f0f0f0;border:1.5px dashed #ccc;border-radius:5px;padding:8px;cursor:pointer;font-size:.75rem;color:#666">
+        <input type="file" id="csv-upload" accept=".csv,.txt" style="display:none" onchange="importarCSV(event)">
+        ↑ Actualitzar el stock via CSV
+      </label>
     </div>
 
-    <!-- STOCK MICGESTIÓ -->
-    <div class="tc" id="tab-stock">
-      <div style="background:#e8f4f0;border:1px solid #1D9E75;border-radius:6px;padding:9px 11px;font-size:.74rem;color:#0F6E56;margin-bottom:2px;">
-        <strong style="display:block;font-size:.7rem;text-transform:uppercase;letter-spacing:.05em;margin-bottom:3px">📦 Stock MicGestió</strong>
-        Actualitzat: <strong id="stock-date">31/03/2026</strong> · <span id="stock-count">1.401</span> articles · AG+PR
-      </div>
-      <div class="fg">
-        <label>Cerca article</label>
-        <input type="text" id="stock-cerca" placeholder="Ex: Lavandula, Cistus CT 2 L..." oninput="cercarStock()" autocomplete="off">
-      </div>
-      <div id="stock-resultats" style="max-height:340px;overflow-y:auto;"></div>
-      <div class="div"></div>
-      <div style="display:flex;gap:6px;margin-top:2px;">
-        <label style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;background:#f0f0f0;border:1.5px dashed #ccc;border-radius:5px;padding:8px;cursor:pointer;font-size:.75rem;color:#666;transition:all .2s" 
-               onmouseover="this.style.borderColor='#1D9E75';this.style.color='#0F6E56'" 
-               onmouseout="this.style.borderColor='#ccc';this.style.color='#666'">
-          <input type="file" id="csv-upload" accept=".csv,.txt" style="display:none" onchange="importarCSV(event)">
-          ↑ Actualitzar via CSV
-        </label>
-      </div>
-      <div class="hint" style="margin-top:6px"><strong>💡 Com funciona</strong>Cerca un article del MicGestió → assigna'l a un sector del plànol. El stock es suma AG+PR (ME exclòs).</div>
-    </div>
   </div>
 
   <!-- PLÀNOL -->
@@ -571,7 +556,7 @@ let _tConn=null;
 function posarConn(ok){
   const b=document.getElementById('badge');
   clearTimeout(_tConn);
-  if(ok){b.classList.remove('off');b.textContent='H1–H7 · v5.22';return;}
+  if(ok){b.classList.remove('off');b.textContent='H1–H7 · v5.23';return;}
   _tConn=setTimeout(()=>{b.classList.add('off');b.textContent='⚠ Sense connexió';},3000);
 }
 function stockDeSector(id){const r=[];Object.entries(stockAsignacions).forEach(([nom,asigs])=>{asigs.forEach(a=>{if(a.sector===id)r.push({nom,unitats:a.unitats});});});return r;}
@@ -593,40 +578,20 @@ function desarAsig(noms){
   refrescarVistes();
 }
 function refrescarVistes(){
-  reconstruirEspecies();
   render();
   actualitzarResum();
-  cercarPerEspecie(true);
-  if(!document.getElementById('stock-resultats').contains(document.activeElement)) cercarStock();
+  // no es redibuixen els resultats mentre s'està omplint una línia d'ubicació
+  if(!document.getElementById('rr').contains(document.activeElement)) cercar(true);
   const pop=document.getElementById('pop');
   if(pop.classList.contains('vis')) omplirPop(pop._sectorId);
   if(document.getElementById('pd').classList.contains('open')) omplirPD();
 }
-// Llista d'espècies de la pestanya Cerca: surt del stock, de les assignacions i dels lots
-let _clauEspecies=null;
-function reconstruirEspecies(){
-  const noms=new Set();
-  Object.keys(STOCK_DATA).forEach(k=>noms.add(especieDe(k)));
-  Object.keys(stockAsignacions).forEach(k=>noms.add(especieDe(k)));
-  lots.forEach(l=>{if(l.especie)noms.add(especieDe(l.especie));});
-  noms.delete('');
-  const llista=[...noms].sort((a,b)=>a.localeCompare(b,'ca'));
-  const clau=llista.join('|');
-  if(clau===_clauEspecies)return;
-  _clauEspecies=clau;
-  totsOpcions=llista.map(n=>({val:n,txt:n,grp:n.split(' ')[0]}));
-  filtrarSelect();
-}
-
-// Guardar totes les opcions del select per filtrar
-let totsOpcions = [];
 window.addEventListener('load',()=>{
   iniciPanell();
   matchMedia('(orientation: landscape)').addEventListener('change',iniciPanell);
   ajustarSVG();
   // fd eliminat (formulari +Lot suprimit)
   actualitzarSelects();
-  reconstruirEspecies();
   document.getElementById('stock-date').textContent = stockDataTxt;
   if(!fbOK) posarConn(false);
   document.getElementById('stock-count').textContent = Object.keys(STOCK_DATA).length.toLocaleString();
@@ -1688,93 +1653,65 @@ function delLot(id){
 }
 
 // ── CERCA PER ESPÈCIE ─────────────────────────────────────
-function filtrarSelect(){
-  const q=norm(document.getElementById('ic').value.trim());
-  const sel=document.getElementById('sel-esp');
-  const abans=sel.value;
-  sel.innerHTML='<option value="">— Selecciona espècie —</option>';
-  let grpActual='', grpEl=null;
-  totsOpcions.filter(o=>o.val&&norm(o.txt).includes(q)).forEach(o=>{
-    if(o.grp!==grpActual){
-      if(grpEl)sel.appendChild(grpEl);
-      grpEl=document.createElement('optgroup');
-      grpEl.label=o.grp; grpActual=o.grp;
-    }
-    const opt=document.createElement('option');
-    opt.value=o.val; opt.textContent=o.txt;
-    grpEl.appendChild(opt);
-  });
-  if(grpEl)sel.appendChild(grpEl);
-  sel.value=abans; if(sel.selectedIndex<0) sel.value='';
-}
-
-// mantenir=true: només repinta la llista de resultats (no toca els sectors il·luminats)
-function cercarPerEspecie(mantenir){
-  mantenir = mantenir===true;
-  const esp=document.getElementById('sel-esp').value;
-  const fs=document.getElementById('fs').value;
-  if(!mantenir) dst=[];
-  if(!esp&&!fs){document.getElementById('rr').innerHTML='<div class="empty">Selecciona una espècie per localitzar-la</div>';if(!mantenir)render();return;}
-
-  // 1) Resultats de lots manuals
-  let resLots=lots.filter(l=>{
-    const mEsp=esp?especieDe(l.especie)===esp:true;
-    const mSec=fs?l.sector===fs:true;
-    return mEsp&&mSec;
-  });
-
-  // 2) Resultats de stock MicGestió assignat
-  let resStock=[];
-  Object.entries(stockAsignacions).forEach(([nom,asigs])=>{
-    // esp és l'espècie (p.ex. "Iris pallida"); nom és l'article complet (p.ex. "Iris pallida CT 2 L")
-    if(esp&&especieDe(nom)!==esp)return;
-    asigs.forEach(a=>{
-      const mSec=fs?a.sector===fs:true;
-      if(mSec) resStock.push({especie:nom,sector:a.sector,unitats:a.unitats,format:'MicGestió',font:'stock'});
-    });
-  });
-
-  const tot=[...resLots.map(l=>({...l,font:'lot'})),...resStock];
+// ── CERCA (localitzar i ubicar) ───────────────────────────
+let _tCerca=null;
+function cercaDiferida(){clearTimeout(_tCerca);_tCerca=setTimeout(()=>cercar(),200);}
+// mantenir=true: només repinta la llista (no toca els sectors il·luminats)
+function cercar(mantenir){
+  mantenir=mantenir===true;
+  const q=norm(document.getElementById('ic').value.trim()),paraules=q.split(/\s+/).filter(Boolean);
+  const fs=document.getElementById('fs').value,rr=document.getElementById('rr');
+  const ambText=q.length>=2;
+  if(!mantenir)dst=[];
+  if(!ambText&&!fs){rr.innerHTML='<div class="empty">Escriu el nom d\'una planta per localitzar-la</div>';if(!mantenir)render();return;}
+  const coincideix=n=>{const x=norm(n);return paraules.every(p=>x.includes(p));};
+  let arts=[...new Set([...Object.keys(STOCK_DATA),...Object.keys(stockAsignacions)])].filter(n=>!ambText||coincideix(n));
+  if(fs)arts=arts.filter(n=>(stockAsignacions[n]||[]).some(a=>a.sector===fs));
+  arts.sort((a,b)=>a.localeCompare(b,'ca'));
+  const ls=lots.filter(l=>(!ambText||coincideix(l.especie||''))&&(!fs||l.sector===fs));
   if(!mantenir){
-    dst=[...new Set(tot.map(r=>r.sector))];
+    dst=fs?[fs]:[...new Set([...arts.flatMap(n=>(stockAsignacions[n]||[]).map(a=>a.sector)),...ls.map(l=>l.sector)])];
     const gs=[...new Set(dst.map(id=>{const s=sectors.find(x=>x.id===id);return s?grupDe(s):null;}))];
     grupObert=gs.length===1&&gs[0]?gs[0]:null;
     render();
   }
-
-  // 3) Articles d'aquesta espècie amb stock encara sense ubicar
-  let pend='';
-  if(esp&&!fs){
-    const p=Object.entries(STOCK_DATA).map(([nom,v])=>[nom,v.total-utAssignadesDe(nom)]).filter(([nom,u])=>u>0&&especieDe(nom)===esp);
-    if(p.length){
-      pend=`<div style="font-size:.69rem;color:#7a5a00;margin:8px 0 4px">Sense ubicar (clic per assignar)</div>`+
-        p.map(([nom,u])=>`<div class="ci" onclick="anarAStock(${jsq(nom)})">
-      <div class="cn">${esc(nom)}</div>
-      <div class="cf">${u.toLocaleString()} ut. sense ubicar</div>
-    </div>`).join('');
-    }
-  }
-
-  if(!tot.length){document.getElementById('rr').innerHTML=`<div class="empty">Cap ubicació per <em>${esc(esp||'aquest sector')}</em></div>`+pend;return;}
-  let html=`<div style="font-size:.69rem;color:#4a4a4a;margin-bottom:5px">${tot.length} resultat${tot.length>1?'s':''} trobat${tot.length>1?'s':''}</div>`;
-  tot.forEach(r=>{
-    const s=sectors.find(x=>x.id===r.sector);
-    const badge=r.font==='stock'
-      ?`<span style="background:#e8f4f0;color:#0F6E56;border-radius:3px;padding:1px 5px;font-size:.63rem;font-weight:600">STOCK</span>`
-      :`<span style="background:#f0f0f0;color:#666;border-radius:3px;padding:1px 5px;font-size:.63rem">LOT</span>`;
-    html+=`<div class="ci" onclick="ressaltar(${jsq(r.sector)})">
-      <div class="cn">${esc(r.especie)}</div>
-      <div class="cf">${esc(r.format)} · <strong style="color:${s?s.color:'#333'}">${esc(r.sector)}</strong> · ${esc(r.unitats)} ut. ${badge}</div>
-    </div>`;
+  if(!arts.length&&!ls.length){rr.innerHTML=`<div class="empty">Cap resultat${ambText?' per <em>'+esc(document.getElementById('ic').value.trim())+'</em>':''}</div>`;return;}
+  const MAX=40,vist=arts.slice(0,MAX);
+  let html=`<div style="font-size:.69rem;color:#4a4a4a;margin-bottom:6px">${arts.length+ls.length} resultat${arts.length+ls.length>1?'s':''}${arts.length>MAX?` (se'n mostren ${MAX}: afina la cerca)`:''}</div>`;
+  vist.forEach(nom=>{html+=fitxaArticle(nom,fs);});
+  ls.forEach(l=>{
+    const s=sectors.find(x=>x.id===l.sector);
+    html+=`<div class="ci" onclick="ressaltar(${jsq(l.sector)})"><div class="cn">${esc(l.especie)}</div>
+      <div class="cf">${esc(l.format||'')} · <strong style="color:${s?s.color:'#333'}">${esc(l.sector)}</strong> · ${esc(l.unitats)} ut. <span style="background:#f0f0f0;color:#666;border-radius:3px;padding:1px 5px;font-size:.63rem">LOT</span></div></div>`;
   });
-  document.getElementById('rr').innerHTML=html+pend;
+  rr.innerHTML=html;
 }
-
-function anarAStock(nom){
-  tab('stock');
-  document.getElementById('stock-cerca').value=nom;
-  cercarStock();
+function idArticle(nom){let h=0;for(let i=0;i<nom.length;i++){h=(h*31+nom.charCodeAt(i))&0xfffffff;}const id='s'+h.toString(36);_nomPerSafeId[id]=nom;return id;}
+// Fitxa d'un article: stock, on és (clic per anar-hi) i ubicació de les unitats que queden
+function fitxaArticle(nom,fs){
+  const safeId=idArticle(nom),v=STOCK_DATA[nom];
+  const asig=(stockAsignacions[nom]||[]).filter(a=>!fs||a.sector===fs);
+  const utAssignades=(stockAsignacions[nom]||[]).reduce((a,x)=>a+x.unitats,0);
+  const rep=reparticionsActuals[nom]||[];
+  const utRestants=v?v.total-utAssignades-rep.reduce((a,x)=>a+(parseInt(x.unitats)||0),0):0;
+  const xifres=v?`<span class="stock-ag">AG: ${v.ag.toLocaleString()}</span><span class="stock-pr">PR: ${v.pr.toLocaleString()}</span><span class="stock-total">TOTAL: ${v.total.toLocaleString()} ut.</span>`
+    :`<span style="color:#c0392b">Sense stock al MicGestió</span>`;
+  const llocs=asig.length?'<div style="margin-bottom:4px">'+asig.map(a=>{const s=sectors.find(x=>x.id===a.sector);
+      return `<span class="stock-assignat stock-anar" onclick="ressaltar(${jsq(a.sector)})" title="Mostra al plànol">📍 ${esc(etiquetaLlarga(a.sector))}: ${a.unitats.toLocaleString()} ut.</span> `;}).join('')+'</div>':'';
+  return `<div class="stock-item" id="si-${safeId}">
+      <div class="stock-nom">${esc(nom)}</div>
+      <div class="stock-xifres">${xifres}</div>
+      ${llocs}
+      ${v?`<div id="restants-${safeId}" style="color:${utRestants>0?'#b7791f':'#999'};font-size:.68rem;margin-bottom:3px">${utRestants>0?`Sense ubicar: ${utRestants.toLocaleString()} ut.`:'Tot ubicat'}</div>`:''}
+      <div id="linies-${safeId}">${rep.map((r,i)=>renderLinia(nom,safeId,i,r.sector,r.unitats,v?v.total:0)).join('')}</div>
+      ${v?`<div style="display:flex;gap:5px;margin-top:5px;">
+        <button class="bs2" onclick="afegirLinia('${safeId}')">＋ Ubicar</button>
+        <button class="bs3" id="conf-${safeId}" style="display:${rep.length?'block':'none'}" onclick="confirmarReparticio('${safeId}')">✓ Confirmar</button>
+      </div>`:''}
+    </div>`;
 }
+function etiquetaLlarga(id){return id==='ZP'?'Zona de plantació':id;}
+function cercarStock(){cercar(true);}
 
 function ressaltar(id){
   const s0=sectors.find(x=>x.id===id),gr0=s0&&grupDe(s0);
@@ -1902,7 +1839,7 @@ function actualitzarResum(){
 }
 
 function tab(id){
-  ['cerca','resum','stock'].forEach((t,i)=>{
+  ['cerca','resum'].forEach((t,i)=>{
     document.querySelectorAll('.tb')[i].classList.toggle('active',t===id);
     document.getElementById('tab-'+t).classList.toggle('active',t===id);
   });
@@ -1918,75 +1855,6 @@ function carregarEspeciesNoves() {}
 // Reparticions en curs (multi-sector): { nomArticle: [{sector,unitats}, ...] }
 let reparticionsActuals = {};
 const _nomPerSafeId = {}; // safeId → nom original
-
-function cercarStock() {
-  const q = norm(document.getElementById('stock-cerca').value.trim());
-  const paraules = q.split(/\s+/);
-  const div = document.getElementById('stock-resultats');
-  if (q.length < 2) {
-    div.innerHTML = '<div class="stock-empty">Introdueix almenys 2 caràcters</div>';
-    return;
-  }
-  const matches = Object.entries(STOCK_DATA)
-    .filter(([k]) => { const n = norm(k); return paraules.every(p => n.includes(p)); })
-    .slice(0, 40);
-  if (!matches.length) { div.innerHTML = '<div class="stock-empty">Cap resultat</div>'; return; }
-  let html = `<div style="font-size:.69rem;color:#4a4a4a;margin-bottom:6px">${matches.length}${matches.length===40?'+ (afina la cerca)':''} resultats</div>`;
-  matches.forEach(([nom, v]) => {
-    // safeId: hash numèric simple per evitar problemes amb btoa i caràcters especials
-    let h=0; for(let i=0;i<nom.length;i++){h=(h*31+nom.charCodeAt(i))&0xfffffff;}
-    const safeId='s'+h.toString(36);
-    _nomPerSafeId[safeId]=nom; // desar per recuperar-lo des dels handlers
-    const asig = stockAsignacions[nom] || [];
-    // Unitats ja assignades definitivament
-    const utAssignades = asig.reduce((a,x)=>a+x.unitats,0);
-    // Reparticions en curs per aquest article
-    const rep = reparticionsActuals[nom] || [];
-    const utRepartides = rep.reduce((a,x)=>a+x.unitats,0);
-    const utRestants = v.total - utAssignades - utRepartides;
-
-    // Historial assignacions confirmades
-    let histHtml = '';
-    if (asig.length) {
-      histHtml = '<div style="margin-bottom:5px">' +
-        asig.map(a=>`<span class="stock-assignat">✓ ${esc(a.sector)}: ${a.unitats.toLocaleString()} ut.</span> `).join('') +
-      '</div>';
-    }
-
-    // Línies de repartició en curs
-    let liniesHtml = rep.map((r, i) => renderLinia(nom, safeId, i, r.sector, r.unitats, v.total)).join('');
-
-    html += `<div class="stock-item" id="si-${safeId}">
-      <div class="stock-nom">${esc(nom)}</div>
-      <div class="stock-xifres">
-        <span class="stock-ag">AG: ${v.ag.toLocaleString()}</span>
-        <span class="stock-pr">PR: ${v.pr.toLocaleString()}</span>
-        <span class="stock-total">TOTAL: ${v.total.toLocaleString()} ut.</span>
-        ${utAssignades>0?`<span style="color:#888;font-size:.67rem">Assignat: ${utAssignades.toLocaleString()}</span>`:''}
-        <span id="restants-${safeId}" style="color:${utRestants>0?'#E8A020':'#ccc'};font-size:.67rem">
-          ${utRestants>0?`Disponible: ${utRestants.toLocaleString()}`:'· Totalment assignat'}
-        </span>
-      </div>
-      ${histHtml}
-      <div id="linies-${safeId}">${liniesHtml}</div>
-      <div style="display:flex;gap:5px;margin-top:5px;">
-        <button onclick="afegirLinia('${safeId}')"
-          style="background:#f0f0f0;color:#444;border:1.5px dashed #ccc;border-radius:4px;padding:4px 10px;font-size:.73rem;cursor:pointer;font-family:'IBM Plex Sans',sans-serif;flex:1;transition:all .2s"
-          onmouseover="this.style.borderColor='#1D9E75';this.style.color='#0F6E56'"
-          onmouseout="this.style.borderColor='#ccc';this.style.color='#444'">
-          ＋ Afegir sector
-        </button>
-        <button onclick="confirmarReparticio('${safeId}')"
-          style="background:#0F6E56;color:white;border:none;border-radius:4px;padding:4px 12px;font-size:.73rem;font-weight:600;cursor:pointer;font-family:'IBM Plex Sans',sans-serif;transition:background .2s"
-          onmouseover="this.style.background='#1D9E75'"
-          onmouseout="this.style.background='#0F6E56'">
-          ✓ Confirmar
-        </button>
-      </div>
-    </div>`;
-  });
-  div.innerHTML = html;
-}
 
 function renderLinia(nom, safeId, idx, sectorVal, unitatsVal, maxTotal) {
   const sectorOpts = sectors.map(s =>
@@ -2042,8 +1910,8 @@ function actualitzarLinia(safeId, idx, camp, valor) {
   const utRestants = v.total - utAssignades - utRepartides;
   const span = document.getElementById('restants-' + safeId);
   if (span) {
-    span.textContent = utRestants > 0 ? `Disponible: ${utRestants.toLocaleString()}` : '· Totalment assignat';
-    span.style.color = utRestants > 0 ? '#E8A020' : '#ccc';
+    span.textContent = utRestants > 0 ? `Sense ubicar: ${utRestants.toLocaleString()} ut.` : 'Tot ubicat';
+    span.style.color = utRestants > 0 ? '#b7791f' : '#999';
   }
 }
 
@@ -2056,10 +1924,12 @@ function refrescarItem(nom, safeId) {
   const utRestants = v.total - utAssignades - utRepartides;
   const liniesDiv = document.getElementById('linies-' + safeId);
   if (liniesDiv) liniesDiv.innerHTML = rep.map((r,i) => renderLinia(nom, safeId, i, r.sector, r.unitats, v.total)).join('');
+  const conf = document.getElementById('conf-' + safeId);
+  if (conf) conf.style.display = rep.length ? 'block' : 'none';
   const span = document.getElementById('restants-' + safeId);
   if (span) {
-    span.textContent = utRestants > 0 ? `Disponible: ${utRestants.toLocaleString()}` : '· Totalment assignat';
-    span.style.color = utRestants > 0 ? '#E8A020' : '#ccc';
+    span.textContent = utRestants > 0 ? `Sense ubicar: ${utRestants.toLocaleString()} ut.` : 'Tot ubicat';
+    span.style.color = utRestants > 0 ? '#b7791f' : '#999';
   }
 }
 
