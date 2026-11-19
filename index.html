@@ -220,7 +220,7 @@
 <header>
   <div class="logo">CULTI<span>DELTA</span></div>
   <h1>Localitzador de Plantes · Zona Solsó</h1>
-  <div class="badge" id="badge">H1–H7 · v5.18</div>
+  <div class="badge" id="badge">H1–H7 · v5.19</div>
 </header>
 <div class="app">
   <div class="sb">
@@ -537,7 +537,7 @@ let _tConn=null;
 function posarConn(ok){
   const b=document.getElementById('badge');
   clearTimeout(_tConn);
-  if(ok){b.classList.remove('off');b.textContent='H1–H7 · v5.18';return;}
+  if(ok){b.classList.remove('off');b.textContent='H1–H7 · v5.19';return;}
   _tConn=setTimeout(()=>{b.classList.add('off');b.textContent='⚠ Sense connexió';},3000);
 }
 function stockDeSector(id){const r=[];Object.entries(stockAsignacions).forEach(([nom,asigs])=>{asigs.forEach(a=>{if(a.sector===id)r.push({nom,unitats:a.unitats});});});return r;}
@@ -1115,7 +1115,9 @@ function grupDe(s){
 // Etiqueta curta, la mateixa que surt al plànol
 function etiqueta(id){
   const zp=id.match(/^(H\d+)-S(\d+)$/);
-  if(zp&&ZONES_PASSADISSOS.has(zp[1]))return 'P'+zp[2];
+  if(zp&&ZONES_PASSADISSOS.has(zp[1]))return zp[2];
+  const zpp=id.match(/^H\d+-P(\d+)$/); // passadissos de zones sense sectors (H2-P1…): només el número
+  if(zpp)return zpp[1];
   return id.replace(/^H\d+-(S(?=\d))?/,'');
 }
 // Centra el plànol en un conjunt de sectors
