@@ -147,6 +147,8 @@
   .pdh h3{font-family:'IBM Plex Mono',monospace;font-size:.88rem;letter-spacing:.04em}
   .pdb{flex:1;overflow-y:auto;padding:13px}
   .zc{position:absolute;bottom:13px;right:13px;display:flex;flex-direction:column;gap:3px;z-index:50}
+  #bgeo.on{background:#1a73e8;color:white;border-color:#1a73e8}
+  #geo-info{display:none;position:absolute;left:8px;bottom:34px;z-index:20;background:rgba(255,255,255,.93);border:1px solid #c6d4f5;border-radius:6px;padding:4px 9px;font-size:.74rem;font-family:'IBM Plex Mono',monospace;color:#1a3d8f;box-shadow:0 2px 6px rgba(0,0,0,.12);pointer-events:none}
   .zb{width:29px;height:29px;background:white;border:1px solid #ddd;border-radius:5px;cursor:pointer;font-size:.88rem;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 5px rgba(0,0,0,.1);transition:background .15s}
   .zb:hover{background:var(--verd-clar)}
   .notif{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:var(--gf);color:white;padding:8px 17px;border-radius:17px;font-size:.79rem;z-index:2000;opacity:0;transition:opacity .3s;pointer-events:none}
@@ -242,7 +244,7 @@
 <header>
   <div class="logo">CULTI<span>DELTA</span></div>
   <h1>Localitzador de Plantes · Zona Solsó</h1>
-  <div class="badge" id="badge">H1–H7 · v5.21</div>
+  <div class="badge" id="badge">H1–H7 · v5.22</div>
 </header>
 <div class="app">
   <div class="sb">
@@ -333,7 +335,9 @@
       <button class="zb" onclick="zoom(1.25)">＋</button>
       <button class="zb" onclick="zoom(0.8)">－</button>
       <button class="zb" onclick="resetZ()">⌂</button>
+      <button class="zb" id="bgeo" onclick="commutaGeo()" title="La meva ubicació (GPS)">◎</button>
     </div>
+    <div id="geo-info"></div>
   </div>
 
   <div class="pd" id="pd">
@@ -567,7 +571,7 @@ let _tConn=null;
 function posarConn(ok){
   const b=document.getElementById('badge');
   clearTimeout(_tConn);
-  if(ok){b.classList.remove('off');b.textContent='H1–H7 · v5.21';return;}
+  if(ok){b.classList.remove('off');b.textContent='H1–H7 · v5.22';return;}
   _tConn=setTimeout(()=>{b.classList.add('off');b.textContent='⚠ Sense connexió';},3000);
 }
 function stockDeSector(id){const r=[];Object.entries(stockAsignacions).forEach(([nom,asigs])=>{asigs.forEach(a=>{if(a.sector===id)r.push({nom,unitats:a.unitats});});});return r;}
@@ -674,6 +678,84 @@ function canviarFons(){
   try{localStorage.setItem('solso_fons',fonsFoto?'foto':'planol');}catch(e){}
 }
 
+// ── LA MEVA UBICACIÓ (GPS del mòbil) ──────────────────────
+// lat/lon (WGS84 ≈ ETRS89) → UTM 31N → píxel del plànol, amb la mateixa georeferència que l'ortofoto
+function utm31(lat,lon){
+  const a=6378137,f=1/298.257222101,k0=0.9996,e2=f*(2-f),ep2=e2/(1-e2);
+  const fi=lat*Math.PI/180,la=(lon-3)*Math.PI/180;
+  const N=a/Math.sqrt(1-e2*Math.sin(fi)**2),T=Math.tan(fi)**2,C=ep2*Math.cos(fi)**2,A=Math.cos(fi)*la;
+  const e4=e2*e2,e6=e4*e2;
+  const M=a*((1-e2/4-3*e4/64-5*e6/256)*fi-(3*e2/8+3*e4/32+45*e6/1024)*Math.sin(2*fi)+(15*e4/256+45*e6/1024)*Math.sin(4*fi)-(35*e6/3072)*Math.sin(6*fi));
+  const E=500000+k0*N*(A+(1-T+C)*A**3/6+(5-18*T+T*T+72*C-58*ep2)*A**5/120);
+  const Nn=k0*(M+N*Math.tan(fi)*(A*A/2+(5-T+9*C+4*C*C)*A**4/24+(61-58*T+T*T+600*C-330*ep2)*A**6/720));
+  return [E,Nn];
+}
+const GEO={s:0.4445,th:1.44,ax:497,ay:430,AE:291945.09,AN:4507579.5};
+function geoAPla(lat,lon){
+  const [E,N]=utm31(lat,lon),dE=E-GEO.AE,dN=GEO.AN-N;
+  const c=Math.cos(GEO.th*Math.PI/180),si=Math.sin(GEO.th*Math.PI/180);
+  return {x:GEO.ax+(c*dE+si*dN)/GEO.s,y:GEO.ay+(-si*dE+c*dN)/GEO.s};
+}
+let geoWatch=null,geoPos=null,geoCentrat=false;
+function dinsPoligon(x,y,pts){
+  const P=pts.trim().split(/\s+/).map(q=>q.split(',').map(Number));let d=false;
+  for(let i=0,j=P.length-1;i<P.length;j=i++){const[xi,yi]=P[i],[xj,yj]=P[j];if((yi>y)!==(yj>y)&&x<(xj-xi)*(y-yi)/(yj-yi)+xi)d=!d;}
+  return d;
+}
+function areaPol(pts){const P=pts.trim().split(/\s+/).map(q=>q.split(',').map(Number));let a=0;for(let i=0,j=P.length-1;i<P.length;j=i++)a+=(P[j][0]+P[i][0])*(P[j][1]-P[i][1]);return Math.abs(a/2);}
+// Sector (el més petit, és a dir, el passadís) on cau el punt
+function sectorEn(x,y){
+  const d=sectors.filter(s=>s.pts&&dinsPoligon(x,y,s.pts));
+  d.sort((a,b)=>areaPol(a.pts)-areaPol(b.pts));
+  return d[0]||null;
+}
+function commutaGeo(){
+  if(geoWatch!==null){aturaGeo();return;}
+  if(!('geolocation' in navigator)){notif('⚠️ Aquest navegador no dona la ubicació');return;}
+  geoCentrat=false;
+  document.getElementById('bgeo').classList.add('on');
+  const gi=document.getElementById('geo-info');gi.style.display='block';gi.textContent='📡 Buscant la ubicació…';
+  geoWatch=navigator.geolocation.watchPosition(posGeo,errGeo,{enableHighAccuracy:true,maximumAge:2000,timeout:30000});
+}
+function aturaGeo(){
+  if(geoWatch!==null)navigator.geolocation.clearWatch(geoWatch);
+  geoWatch=null;geoPos=null;
+  document.getElementById('bgeo').classList.remove('on');
+  document.getElementById('geo-info').style.display='none';
+  render();
+}
+function posGeo(p){
+  const q=geoAPla(p.coords.latitude,p.coords.longitude),acc=Math.round(p.coords.accuracy||0);
+  geoPos={x:q.x,y:q.y,acc};
+  const img=document.getElementById('pi'),W=img.naturalWidth||1200,H=img.naturalHeight||806;
+  const dins=q.x>=0&&q.y>=0&&q.x<=W&&q.y<=H;
+  const s=dins?sectorEn(q.x,q.y):null;
+  document.getElementById('geo-info').textContent=!dins?`📡 Fora del plànol · ±${acc} m`:
+    s?`📡 ${s.id==='ZP'?'Zona de plantació':s.id} · ±${acc} m`:`📡 Fora dels sectors · ±${acc} m`;
+  render();
+  if(!geoCentrat){
+    geoCentrat=true;
+    if(dins){const pw=document.getElementById('pw'),sx=img.offsetWidth/W,sy=img.offsetHeight/H;
+      pw.scrollTo({left:q.x*sx-pw.offsetWidth/2,top:q.y*sy-pw.offsetHeight/2,behavior:'smooth'});}
+    else notif('📡 Ets fora del viver: el punt no surt al plànol');
+  }
+}
+function errGeo(e){
+  const m=e.code===1?'Cal permetre la ubicació al navegador':e.code===3?'El GPS no respon; prova a l\'exterior':'No s\'ha pogut obtenir la ubicació';
+  notif('⚠️ '+m);
+  if(e.code===1)aturaGeo();
+}
+function dibuixaGeo(sv){
+  if(!geoPos)return;
+  const ns='http://www.w3.org/2000/svg';
+  const c=document.createElementNS(ns,'circle');
+  c.setAttribute('cx',geoPos.x);c.setAttribute('cy',geoPos.y);c.setAttribute('r',Math.max(geoPos.acc/GEO.s,3));
+  c.setAttribute('fill','#1a73e8');c.setAttribute('fill-opacity','.15');c.setAttribute('stroke','#1a73e8');c.setAttribute('stroke-opacity','.5');c.setAttribute('stroke-width','.8');c.setAttribute('pointer-events','none');
+  const d=document.createElementNS(ns,'circle');
+  d.setAttribute('cx',geoPos.x);d.setAttribute('cy',geoPos.y);d.setAttribute('r','3.5');d.setAttribute('id','geo-punt');
+  d.setAttribute('fill','#1a73e8');d.setAttribute('stroke','white');d.setAttribute('stroke-width','1.5');d.setAttribute('pointer-events','none');
+  sv.appendChild(c);sv.appendChild(d);
+}
 function render(){
   const sv=document.getElementById('sv');
   sv.innerHTML='';
@@ -815,6 +897,7 @@ function render(){
       sv.appendChild(c);sv.appendChild(cl);
     }
   }
+  dibuixaGeo(sv);
 }
 
 // ── AJUSTAR LA FORMA D'UN SECTOR (mode 'a') ──────────────
