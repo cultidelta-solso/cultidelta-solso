@@ -171,6 +171,28 @@
   ::-webkit-scrollbar{width:4px;height:4px}
   ::-webkit-scrollbar-thumb{background:#ccc;border-radius:2px}
 
+  /* ── MÒBIL (vertical o horitzontal): barra d'eines compacta ── */
+  .mb-mob{display:none}
+  @media (max-width: 700px) and (orientation: portrait), (max-height: 500px) and (orientation: landscape) {
+    .mb-mob{display:inline-flex}
+    .mbt{display:none}
+    .mb{padding:5px 10px;font-size:.95rem;line-height:1;min-width:36px;min-height:32px;align-items:center;justify-content:center;display:inline-flex}
+    .mb-ed{display:none}
+    body.edita .mb-ed{display:inline-flex}
+    body.edita #bed{background:var(--verd);color:white;border-color:var(--verd)}
+    body.sb-off .sb{display:none!important}
+    body:not(.sb-off) #bsb{background:var(--verd);color:white;border-color:var(--verd)}
+    .tb2{flex-wrap:nowrap;padding:4px 8px;gap:6px;overflow-x:auto}
+    .iz{flex:1 1 auto;min-width:0;white-space:nowrap;overflow-x:auto;padding:2px 4px}
+    .badge{white-space:nowrap}
+  }
+  @media (max-height: 500px) and (orientation: landscape) {
+    header{padding:3px 12px}
+    header h1{display:none}
+    .logo{font-size:.9rem}
+    .badge{font-size:.6rem;padding:2px 7px}
+  }
+
   /* ── MÒBIL VERTICAL ───────────────────────────────────── */
   @media (max-width: 700px) and (orientation: portrait) {
     header{padding:8px 14px;gap:8px}
@@ -220,7 +242,7 @@
 <header>
   <div class="logo">CULTI<span>DELTA</span></div>
   <h1>Localitzador de Plantes · Zona Solsó</h1>
-  <div class="badge" id="badge">H1–H7 · v5.19</div>
+  <div class="badge" id="badge">H1–H7 · v5.21</div>
 </header>
 <div class="app">
   <div class="sb">
@@ -289,17 +311,19 @@
   <!-- PLÀNOL -->
   <div class="pa">
     <div class="tb2">
-      <button class="mb actiu" id="bv" onclick="setMode('v')">👁 Visualitzar</button>
-      <button class="mb" id="be" onclick="setMode('e')" title="Clica els punts del contorn del sector, tants com calguin">✏️ Nou sector</button>
-      <button class="mb" id="bc" onclick="setMode('c')" title="Clica al plànol per obtenir coordenades">📍 Coordenades</button>
-      <button class="mb" id="bp" onclick="setMode('p')" title="Clica les 4 cantonades d'un sector i es divideix en passadissos">▦ Sector + passadissos</button>
-      <button class="mb" id="ba" onclick="setMode('a')" title="Arrossega les cantonades d'un sector per ajustar-ne la forma">✥ Ajustar forma</button>
-      <button class="mb" id="bf" onclick="canviarFons()" title="Canvia entre el plànol i la fotografia aèria">🛰 Foto aèria</button>
+      <button class="mb mb-mob" id="bsb" onclick="commutaPanell()" title="Mostra o amaga el panell de cerca">☰</button>
+      <button class="mb actiu" id="bv" onclick="setMode('v')" title="Visualitzar">👁<span class="mbt"> Visualitzar</span></button>
+      <button class="mb mb-ed" id="be" onclick="setMode('e')" title="Clica els punts del contorn del sector, tants com calguin">✏️<span class="mbt"> Nou sector</span></button>
+      <button class="mb mb-ed" id="bc" onclick="setMode('c')" title="Clica al plànol per obtenir coordenades">📍<span class="mbt"> Coordenades</span></button>
+      <button class="mb mb-ed" id="bp" onclick="setMode('p')" title="Clica les 4 cantonades d'un sector i es divideix en passadissos">▦<span class="mbt"> Sector + passadissos</span></button>
+      <button class="mb mb-ed" id="ba" onclick="setMode('a')" title="Arrossega les cantonades d'un sector per ajustar-ne la forma">✥<span class="mbt"> Ajustar forma</span></button>
+      <button class="mb" id="bf" onclick="canviarFons()" title="Canvia entre el plànol i la fotografia aèria">🛰<span class="mbt"> Foto aèria</span></button>
+      <button class="mb mb-mob" id="bed" onclick="commutaEdicio()" title="Eines d'edició del plànol">🛠</button>
       <span class="iz" id="iz">Fes clic a un sector per veure el contingut</span>
     </div>
     <div class="pw" id="pw">
       <div id="psc">
-        <img id="pi" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAABLAAAAMmCAIAAABq2+9IAAAPcklEQVR42u3XQREAAAQAQfTv6iOAHMZuhPtdznQAAADwT0kAAABgCAEAADCEAAAAGEIAAAAMIQAAAIYQAAAAQwgAAIAhBAAAwBACAABgCAEAADCEAAAAGEIAAAAMIQAAAIYQAAAAQwgAAIAhBAAAwBACAABgCAEAADCEAAAAGEIAAAAMIQAAAIYQAAAAQwgAAIAhBAAAMIQAAAAYQgAAAAwhAAAAhhAAAABDCAAAgCEEAADAEAIAAGAIAQAAMIQAAAAYQgAAAAwhAAAAhhAAAABDCAAAgCEEAADAEAIAAGAIAQAAMIQAAAAYQgAAAAwhAAAAhhAAAABDCAAAgCEEAADAEAIAABhCAAAADCEAAACGEAAAAEMIAACAIQQAAMAQAgAAYAgBAAAwhAAAABhCAAAADCEAAACGEAAAAEMIAACAIQQAAMAQAgAAYAgBAAAwhAAAABhCAAAADCEAAACGEAAAAEMIAACAIQQAAMAQAgAAYAgBAAAwhAAAAIYQAAAAQwgAAIAhBAAAwBACAABgCAEAADCEAAAAGEIAAAAMIQAAAIYQAAAAQwgAAIAhBAAAwBACAABgCAEAADCEAAAAGEIAAAAMIQAAAIYQAAAAQwgAAIAhBAAAwBACAABgCAEAADCEAAAAGEIAAABDCAAAgCEEAADAEAIAAGAIAQAAMIQAAAAYQgAAAAwhAAAAhhAAAABDCAAAgCEEAADAEAIAAGAIAQAAMIQAAAAYQgAAAAwhAAAAhhAAAABDCAAAgCEEAADAEAIAAGAIAQAAMIQAAAAYQgAAAAwhAAAAhhAAAMAQAgAAYAgBAAAwhAAAABhCAAAADCEAAACGEAAAAEMIAACAIQQAAMAQAgAAYAgBAAAwhAAAABhCAAAADCEAAACGEAAAAEMIAACAIQQAAMAQAgAAYAgBAAAwhAAAABhCAAAADCEAAACGEAAAAEMIAABgCAEAADCEAAAAGEIAAAAMIQAAAIYQAAAAQwgAAIAhBAAAwBACAABgCAEAADCEAAAAGEIAAAAMIQAAAIYQAAAAQwgAAIAhBAAAwBACAABgCAEAADCEAAAAGEIAAAAMIQAAAIYQAAAAQwgAAIAhBAAAwBACAAAYQgAAAAwhAAAAhhAAAABDCAAAgCEEAADAEAIAAGAIAQAAMIQAAAAYQgAAAAwhAAAAhhAAAABDCAAAgCEEAADAEAIAAGAIAQAAMIQAAAAYQgAAAAwhAAAAhhAAAABDCAAAgCEEAADAEAIAAGAIAQAADCEAAACGEAAAAEMIAACAIQQAAMAQAgAAYAgBAAAwhAAAABhCAAAADCEAAACGEAAAAEMIAACAIQQAAMAQAgAAYAgBAAAwhAAAABhCAAAADCEAAACGEAAAAEMIAACAIQQAAMAQAgAAYAgBAAAwhAAAABhCAAAAQwgAAIAhBAAAwBACAABgCAEAADCEAAAAGEIAAAAMIQAAAIYQAAAAQwgAAIAhBAAAwBACAABgCAEAADCEAAAAGEIAAAAMIQAAAIYQAAAAQwgAAIAhBAAAwBACAABgCAEAADCEAAAAGEIAAAAMIQAAgCEEAADAEAIAAGAIAQAAMIQAAAAYQgAAAAwhAAAAhhAAAABDCAAAgCEEAADAEAIAAGAIAQAAMIQAAAAYQgAAAAwhAAAAhhAAAABDCAAAgCEEAADAEAIAAGAIAQAAMIQAAAAYQgAAAAwhAAAAhhAAAMAQSgAAAGAIAQAAMIQAAAAYQgAAAAwhAAAAhhAAAABDCAAAgCEEAADAEAIAAGAIAQAAMIQAAAAYQgAAAAwhAAAAhhAAAABDCAAAgCEEAADAEAIAAGAIAQAAMIQAAAAYQgAAAAwhAAAAhhAAAABDCAAAgCEEAAAwhAAAABhCAAAADCEAAACGEAAAAEMIAACAIQQAAMAQAgAAYAgBAAAwhAAAABhCAAAADCEAAACGEAAAAEMIAACAIQQAAMAQAgAAYAgBAAAwhAAAABhCAAAADCEAAACGEAAAAEMIAACAIQQAAMAQAgAAGEIAAAAMIQAAAIYQAAAAQwgAAIAhBAAAwBACAABgCAEAADCEAAAAGEIAAAAMIQAAAIYQAAAAQwgAAIAhBAAAwBACAABgCAEAADCEAAAAGEIAAAAMIQAAAIYQAAAAQwgAAIAhBAAAwBACAABgCAEAADCEAAAAhhAAAABDCAAAgCEEAADAEAIAAGAIAQAAMIQAAAAYQgAAAAwhAAAAhhAAAABDCAAAgCEEAADAEAIAAGAIAQAAMIQAAAAYQgAAAAwhAAAAhhAAAABDCAAAgCEEAADAEAIAAGAIAQAAMIQAAAAYQgAAAEMIAACAIQQAAMAQAgAAYAgBAAAwhAAAABhCAAAADCEAAACGEAAAAEMIAACAIQQAAMAQAgAAYAgBAAAwhAAAABhCAAAADCEAAACGEAAAAEMIAACAIQQAAMAQAgAAYAgBAAAwhAAAABhCAAAADCEAAACGEAAAwBACAABgCAEAADCEAAAAGEIAAAAMIQAAAIYQAAAAQwgAAIAhBAAAwBACAABgCAEAADCEAAAAGEIAAAAMIQAAAIYQAAAAQwgAAIAhBAAAwBACAABgCAEAADCEAAAAGEIAAAAMIQAAAIYQAAAAQwgAAGAIAQAAMIQAAAAYQgAAAAwhAAAAhhAAAABDCAAAgCEEAADAEAIAAGAIAQAAMIQAAAAYQgAAAAwhAAAAhhAAAABDCAAAgCEEAADAEAIAAGAIAQAAMIQAAAAYQgAAAAwhAAAAhhAAAABDCAAAgCEEAADAEAIAABhCAAAADCEAAACGEAAAAEMIAACAIQQAAMAQAgAAYAgBAAAwhAAAABhCAAAADCEAAACGEAAAAEMIAACAIQQAAMAQAgAAYAgBAAAwhAAAABhCAAAADCEAAACGEAAAAEMIAACAIQQAAMAQAgAAYAgBAAAMIQAAAIYQAAAAQwgAAIAhBAAAwBACAABgCAEAADCEAAAAGEIAAAAMIQAAAIYQAAAAQwgAAIAhBAAAwBACAABgCAEAADCEAAAAGEIAAAAMIQAAAIYQAAAAQwgAAIAhBAAAwBACAABgCAEAADCEAAAAGEIAAABDCAAAgCEEAADAEAIAAGAIAQAAMIQAAAAYQgAAAAwhAAAAhhAAAABDCAAAgCEEAADAEAIAAGAIAQAAMIQAAAAYQgAAAAwhAAAAhhAAAABDCAAAgCEEAADAEAIAAGAIAQAAMIQAAAAYQgAAAAwhAACAIQQAAMAQAgAAYAgBAAAwhAAAABhCAAAADCEAAACGEAAAAEMIAACAIQQAAMAQAgAAYAgBAAAwhAAAABhCAAAADCEAAACGEAAAAEMIAACAIQQAAMAQAgAAYAgBAAAwhAAAABhCAAAADCEAAACGEAAAwBBKAAAAYAgBAAAwhAAAABhCAAAADCEAAACGEAAAAEMIAACAIQQAAMAQAgAAYAgBAAAwhAAAABhCAAAADCEAAACGEAAAAEMIAACAIQQAAMAQAgAAYAgBAAAwhAAAABhCAAAADCEAAACGEAAAAEMIAACAIQQAADCEAAAAGEIAAAAMIQAAAIYQAAAAQwgAAIAhBAAAwBACAABgCAEAADCEAAAAGEIAAAAMIQAAAIYQAAAAQwgAAIAhBAAAwBACAABgCAEAADCEAAAAGEIAAAAMIQAAAIYQAAAAQwgAAIAhBAAAwBACAAAYQgAAAAwhAAAAhhAAAABDCAAAgCEEAADAEAIAAGAIAQAAMIQAAAAYQgAAAAwhAAAAhhAAAABDCAAAgCEEAADAEAIAAGAIAQAAMIQAAAAYQgAAAAwhAAAAhhAAAABDCAAAgCEEAADAEAIAAGAIAQAAMIQAAACGEAAAAEMIAACAIQQAAMAQAgAAYAgBAAAwhAAAABhCAAAADCEAAACGEAAAAEMIAACAIQQAAMAQAgAAYAgBAAAwhAAAABhCAAAADCEAAACGEAAAAEMIAACAIQQAAMAQAgAAYAgBAAAwhAAAABhCAAAAQwgAAIAhBAAAwBACAABgCAEAADCEAAAAGEIAAAAMIQAAAIYQAAAAQwgAAIAhBAAAwBACAABgCAEAADCEAAAAGEIAAAAMIQAAAIYQAAAAQwgAAIAhBAAAwBACAABgCAEAADCEAAAAGEIAAAAMIQAAAIYQAADAEAIAAGAIAQAAMIQAAAAYQgAAAAwhAAAAhhAAAABDCAAAgCEEAADAEAIAAGAIAQAAMIQAAAAYQgAAAAwhAAAAhhAAAABDCAAAgCEEAADAEAIAAGAIAQAAMIQAAAAYQgAAAAwhAAAAhhAAAABDCAAAYAgBAAAwhAAAABhCAAAADCEAAACGEAAAAEMIAACAIQQAAMAQAgAAYAgBAAAwhAAAABhCAAAADCEAAACGEAAAAEMIAACAIQQAAMAQAgAAYAgBAAAwhAAAABhCAAAADCEAAACGEAAAAEMIAACAIQQAAMAQAgAAGEIAAAAMIQAAAIYQAAAAQwgAAIAhBAAAwBACAABgCAEAADCEAAAAGEIAAAAMIQAAAIYQAAAAQwgAAIAhBAAAwBACAABgCAEAADCEAAAAGEIAAAAMIQAAAIYQAAAAQwgAAIAhBAAAwBACAABgCAEAAAwhAAAAhhAAAABDCAAAgCEEAADAEAIAAGAIAQAAMIQAAAAYQgAAAAwhAAAAhhAAAABDCAAAgCEEAADAEAIAAGAIAQAAMIQAAAAYQgAAAAwhAAAAhhAAAABDCAAAgCEEAADAEAIAAGAIAQAAMIQAAAAYQgAAAEMIAACAIQQAAMAQAgAAYAgBAAAwhAAAABhCAAAADCEAAACGEAAAAEMIAACAIQQAAMAQAgAAYAgBAAAwhAAAABhCAAAADCEAAACGEAAAAEMIAACAIQQAAMAQAgAAYAgBAAAwhAAAABhCAAAADCEAAIAhBAAAwBACAABgCAEAADCEAAAAGEIAAAAMIQAAAIYQAAAAQwgAAIAhBAAAwBACAABgCAEAADCEAAAAGEIAAAAMIQAAAIYQAAAAQwgAAIAhBAAAwBACAABgCAEAADCEAAAAGEIAAAAMIQAAAIYQAADAEEoAAABgCAEAADCEAAAAGEIAAAAMIQAAAIYQAAAAQwgAAIAhBAAAwBACAABgCAEAADCEAAAAGEIAAAAMIQAAAIYQAAAAQwgAAIAhBAAAwBACAABgCAEAADCEAAAAGEIAAAAMIQAAAIYQAAAAQwgAAIAhBAAAMIQAAAAYQgAAAAwhAAAAhhAAAABDCAAAgCEEAADAEAIAAHDLAhjbCSOaGpwmAAAAAElFTkSuQmCC" alt="Plànol Solsó" draggable="false">
+<img id="pi" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAABLAAAAMmCAIAAABq2+9IAAAPcklEQVR42u3XQREAAAQAQfTv6iOAHMZuhPtdznQAAADwT0kAAABgCAEAADCEAAAAGEIAAAAMIQAAAIYQAAAAQwgAAIAhBAAAwBACAABgCAEAADCEAAAAGEIAAAAMIQAAAIYQAAAAQwgAAIAhBAAAwBACAABgCAEAADCEAAAAGEIAAAAMIQAAAIYQAAAAQwgAAIAhBAAAMIQAAAAYQgAAAAwhAAAAhhAAAABDCAAAgCEEAADAEAIAAGAIAQAAMIQAAAAYQgAAAAwhAAAAhhAAAABDCAAAgCEEAADAEAIAAGAIAQAAMIQAAAAYQgAAAAwhAAAAhhAAAABDCAAAgCEEAADAEAIAABhCAAAADCEAAACGEAAAAEMIAACAIQQAAMAQAgAAYAgBAAAwhAAAABhCAAAADCEAAACGEAAAAEMIAACAIQQAAMAQAgAAYAgBAAAwhAAAABhCAAAADCEAAACGEAAAAEMIAACAIQQAAMAQAgAAYAgBAAAwhAAAAIYQAAAAQwgAAIAhBAAAwBACAABgCAEAADCEAAAAGEIAAAAMIQAAAIYQAAAAQwgAAIAhBAAAwBACAABgCAEAADCEAAAAGEIAAAAMIQAAAIYQAAAAQwgAAIAhBAAAwBACAABgCAEAADCEAAAAGEIAAABDCAAAgCEEAADAEAIAAGAIAQAAMIQAAAAYQgAAAAwhAAAAhhAAAABDCAAAgCEEAADAEAIAAGAIAQAAMIQAAAAYQgAAAAwhAAAAhhAAAABDCAAAgCEEAADAEAIAAGAIAQAAMIQAAAAYQgAAAAwhAAAAhhAAAMAQAgAAYAgBAAAwhAAAABhCAAAADCEAAACGEAAAAEMIAACAIQQAAMAQAgAAYAgBAAAwhAAAABhCAAAADCEAAACGEAAAAEMIAACAIQQAAMAQAgAAYAgBAAAwhAAAABhCAAAADCEAAACGEAAAAEMIAABgCAEAADCEAAAAGEIAAAAMIQAAAIYQAAAAQwgAAIAhBAAAwBACAABgCAEAADCEAAAAGEIAAAAMIQAAAIYQAAAAQwgAAIAhBAAAwBACAABgCAEAADCEAAAAGEIAAAAMIQAAAIYQAAAAQwgAAIAhBAAAwBACAAAYQgAAAAwhAAAAhhAAAABDCAAAgCEEAADAEAIAAGAIAQAAMIQAAAAYQgAAAAwhAAAAhhAAAABDCAAAgCEEAADAEAIAAGAIAQAAMIQAAAAYQgAAAAwhAAAAhhAAAABDCAAAgCEEAADAEAIAAGAIAQAADCEAAACGEAAAAEMIAACAIQQAAMAQAgAAYAgBAAAwhAAAABhCAAAADCEAAACGEAAAAEMIAACAIQQAAMAQAgAAYAgBAAAwhAAAABhCAAAADCEAAACGEAAAAEMIAACAIQQAAMAQAgAAYAgBAAAwhAAAABhCAAAAQwgAAIAhBAAAwBACAABgCAEAADCEAAAAGEIAAAAMIQAAAIYQAAAAQwgAAIAhBAAAwBACAABgCAEAADCEAAAAGEIAAAAMIQAAAIYQAAAAQwgAAIAhBAAAwBACAABgCAEAADCEAAAAGEIAAAAMIQAAgCEEAADAEAIAAGAIAQAAMIQAAAAYQgAAAAwhAAAAhhAAAABDCAAAgCEEAADAEAIAAGAIAQAAMIQAAAAYQgAAAAwhAAAAhhAAAABDCAAAgCEEAADAEAIAAGAIAQAAMIQAAAAYQgAAAAwhAAAAhhAAAMAQSgAAAGAIAQAAMIQAAAAYQgAAAAwhAAAAhhAAAABDCAAAgCEEAADAEAIAAGAIAQAAMIQAAAAYQgAAAAwhAAAAhhAAAABDCAAAgCEEAADAEAIAAGAIAQAAMIQAAAAYQgAAAAwhAAAAhhAAAABDCAAAgCEEAAAwhAAAABhCAAAADCEAAACGEAAAAEMIAACAIQQAAMAQAgAAYAgBAAAwhAAAABhCAAAADCEAAACGEAAAAEMIAACAIQQAAMAQAgAAYAgBAAAwhAAAABhCAAAADCEAAACGEAAAAEMIAACAIQQAAMAQAgAAGEIAAAAMIQAAAIYQAAAAQwgAAIAhBAAAwBACAABgCAEAADCEAAAAGEIAAAAMIQAAAIYQAAAAQwgAAIAhBAAAwBACAABgCAEAADCEAAAAGEIAAAAMIQAAAIYQAAAAQwgAAIAhBAAAwBACAABgCAEAADCEAAAAhhAAAABDCAAAgCEEAADAEAIAAGAIAQAAMIQAAAAYQgAAAAwhAAAAhhAAAABDCAAAgCEEAADAEAIAAGAIAQAAMIQAAAAYQgAAAAwhAAAAhhAAAABDCAAAgCEEAADAEAIAAGAIAQAAMIQAAAAYQgAAAEMIAACAIQQAAMAQAgAAYAgBAAAwhAAAABhCAAAADCEAAACGEAAAAEMIAACAIQQAAMAQAgAAYAgBAAAwhAAAABhCAAAADCEAAACGEAAAAEMIAACAIQQAAMAQAgAAYAgBAAAwhAAAABhCAAAADCEAAACGEAAAwBACAABgCAEAADCEAAAAGEIAAAAMIQAAAIYQAAAAQwgAAIAhBAAAwBACAABgCAEAADCEAAAAGEIAAAAMIQAAAIYQAAAAQwgAAIAhBAAAwBACAABgCAEAADCEAAAAGEIAAAAMIQAAAIYQAAAAQwgAAGAIAQAAMIQAAAAYQgAAAAwhAAAAhhAAAABDCAAAgCEEAADAEAIAAGAIAQAAMIQAAAAYQgAAAAwhAAAAhhAAAABDCAAAgCEEAADAEAIAAGAIAQAAMIQAAAAYQgAAAAwhAAAAhhAAAABDCAAAgCEEAADAEAIAABhCAAAADCEAAACGEAAAAEMIAACAIQQAAMAQAgAAYAgBAAAwhAAAABhCAAAADCEAAACGEAAAAEMIAACAIQQAAMAQAgAAYAgBAAAwhAAAABhCAAAADCEAAACGEAAAAEMIAACAIQQAAMAQAgAAYAgBAAAMIQAAAIYQAAAAQwgAAIAhBAAAwBACAABgCAEAADCEAAAAGEIAAAAMIQAAAIYQAAAAQwgAAIAhBAAAwBACAABgCAEAADCEAAAAGEIAAAAMIQAAAIYQAAAAQwgAAIAhBAAAwBACAABgCAEAADCEAAAAGEIAAABDCAAAgCEEAADAEAIAAGAIAQAAMIQAAAAYQgAAAAwhAAAAhhAAAABDCAAAgCEEAADAEAIAAGAIAQAAMIQAAAAYQgAAAAwhAAAAhhAAAABDCAAAgCEEAADAEAIAAGAIAQAAMIQAAAAYQgAAAAwhAACAIQQAAMAQAgAAYAgBAAAwhAAAABhCAAAADCEAAACGEAAAAEMIAACAIQQAAMAQAgAAYAgBAAAwhAAAABhCAAAADCEAAACGEAAAAEMIAACAIQQAAMAQAgAAYAgBAAAwhAAAABhCAAAADCEAAACGEAAAwBBKAAAAYAgBAAAwhAAAABhCAAAADCEAAACGEAAAAEMIAACAIQQAAMAQAgAAYAgBAAAwhAAAABhCAAAADCEAAACGEAAAAEMIAACAIQQAAMAQAgAAYAgBAAAwhAAAABhCAAAADCEAAACGEAAAAEMIAACAIQQAADCEAAAAGEIAAAAMIQAAAIYQAAAAQwgAAIAhBAAAwBACAABgCAEAADCEAAAAGEIAAAAMIQAAAIYQAAAAQwgAAIAhBAAAwBACAABgCAEAADCEAAAAGEIAAAAMIQAAAIYQAAAAQwgAAIAhBAAAwBACAAAYQgAAAAwhAAAAhhAAAABDCAAAgCEEAADAEAIAAGAIAQAAMIQAAAAYQgAAAAwhAAAAhhAAAABDCAAAgCEEAADAEAIAAGAIAQAAMIQAAAAYQgAAAAwhAAAAhhAAAABDCAAAgCEEAADAEAIAAGAIAQAAMIQAAACGEAAAAEMIAACAIQQAAMAQAgAAYAgBAAAwhAAAABhCAAAADCEAAACGEAAAAEMIAACAIQQAAMAQAgAAYAgBAAAwhAAAABhCAAAADCEAAACGEAAAAEMIAACAIQQAAMAQAgAAYAgBAAAwhAAAABhCAAAAQwgAAIAhBAAAwBACAABgCAEAADCEAAAAGEIAAAAMIQAAAIYQAAAAQwgAAIAhBAAAwBACAABgCAEAADCEAAAAGEIAAAAMIQAAAIYQAAAAQwgAAIAhBAAAwBACAABgCAEAADCEAAAAGEIAAAAMIQAAAIYQAADAEAIAAGAIAQAAMIQAAAAYQgAAAAwhAAAAhhAAAABDCAAAgCEEAADAEAIAAGAIAQAAMIQAAAAYQgAAAAwhAAAAhhAAAABDCAAAgCEEAADAEAIAAGAIAQAAMIQAAAAYQgAAAAwhAAAAhhAAAABDCAAAYAgBAAAwhAAAABhCAAAADCEAAACGEAAAAEMIAACAIQQAAMAQAgAAYAgBAAAwhAAAABhCAAAADCEAAACGEAAAAEMIAACAIQQAAMAQAgAAYAgBAAAwhAAAABhCAAAADCEAAACGEAAAAEMIAACAIQQAAMAQAgAAGEIAAAAMIQAAAIYQAAAAQwgAAIAhBAAAwBACAABgCAEAADCEAAAAGEIAAAAMIQAAAIYQAAAAQwgAAIAhBAAAwBACAABgCAEAADCEAAAAGEIAAAAMIQAAAIYQAAAAQwgAAIAhBAAAwBACAABgCAEAAAwhAAAAhhAAAABDCAAAgCEEAADAEAIAAGAIAQAAMIQAAAAYQgAAAAwhAAAAhhAAAABDCAAAgCEEAADAEAIAAGAIAQAAMIQAAAAYQgAAAAwhAAAAhhAAAABDCAAAgCEEAADAEAIAAGAIAQAAMIQAAAAYQgAAAEMIAACAIQQAAMAQAgAAYAgBAAAwhAAAABhCAAAADCEAAACGEAAAAEMIAACAIQQAAMAQAgAAYAgBAAAwhAAAABhCAAAADCEAAACGEAAAAEMIAACAIQQAAMAQAgAAYAgBAAAwhAAAABhCAAAADCEAAIAhBAAAwBACAABgCAEAADCEAAAAGEIAAAAMIQAAAIYQAAAAQwgAAIAhBAAAwBACAABgCAEAADCEAAAAGEIAAAAMIQAAAIYQAAAAQwgAAIAhBAAAwBACAABgCAEAADCEAAAAGEIAAAAMIQAAAIYQAADAEEoAAABgCAEAADCEAAAAGEIAAAAMIQAAAIYQAAAAQwgAAIAhBAAAwBACAABgCAEAADCEAAAAGEIAAAAMIQAAAIYQAAAAQwgAAIAhBAAAwBACAABgCAEAADCEAAAAGEIAAAAMIQAAAIYQAAAAQwgAAIAhBAAAMIQAAAAYQgAAAAwhAAAAhhAAAABDCAAAgCEEAADAEAIAAHDLAhjbCSOaGpwmAAAAAElFTkSuQmCC" alt="Plànol Solsó" draggable="false">
         <img id="po" alt="Ortofoto Solsó" draggable="false">
         <svg id="sv" xmlns="http://www.w3.org/2000/svg"></svg>
       </div>
@@ -448,9 +472,15 @@ const SECTORS_H3 = [
   {id:'H3-S14',nom:'H3 Passadís 14',color:'#a9dfbf',pts:'555.8,331.4 581.0,322.8 609.2,405.0 584.0,413.7',cx:582.5,cy:368.2},
   {id:'H3-S15',nom:'H3 Passadís 15',color:'#6e2f8c',pts:'769.0,256.9 730.6,271.4 742.7,302.0 781.9,288.7',cx:756.1,cy:279.8},
   {id:'H3-S16',nom:'H3 Passadís 16',color:'#8e44ad',pts:'781.5,288.3 742.3,302.0 750.8,327.4 789.1,312.1',cx:765.9,cy:307.4},
-  {id:'H3-S17',nom:'H3 Passadís 17',color:'#a569bd',pts:'789.6,311.3 750.4,327.0 758.9,352.8 799.4,337.2',cx:774.6,cy:332.1},
-  {id:'H3-SM',nom:'H3 Sala Maquines',color:'#7f8c8d',pts:'552.3,301.6 479.7,327.3 489.8,355.5 561.7,329.7',cx:520.9,cy:328.5}
+  {id:'H3-S17',nom:'H3 Passadís 17',color:'#a569bd',pts:'789.6,311.3 750.4,327.0 758.9,352.8 799.4,337.2',cx:774.6,cy:332.1}
 ];
+// Zona de plantació (on hi ha la sala de màquines): no forma part de cap hivernacle.
+// Abans es deia 'H3-SM'; les dades antigues amb aquest codi es llegeixen com a 'ZP'.
+const SECTORS_ALTRES = [
+  {id:'ZP',nom:'Zona de plantació',color:'#7f8c8d',pts:'552.3,301.6 479.7,327.3 489.8,355.5 561.7,329.7',cx:520.9,cy:328.5}
+];
+const ALIES_SECTOR = {'H3-SM':'ZP'};
+const aliesSector = id => ALIES_SECTOR[id] || id;
 const H3_OUTLINE = '769.9,259.6 489.1,357.1 515.4,433.3 799.4,337.2';
 const H3_SEP_AB = '779.7,285.5 497.9,382.5';
 const H3_SEP_BC = '789.6,311.3 506.6,407.9';
@@ -489,7 +519,7 @@ let extra = [];
 // Formes ajustades a mà dels sectors fixos (node 'sectors_forma' de Firebase): {id:{pts,cx,cy}}
 let formes = {};
 function muntaSectors(){
-  sectors = SECTORS_H1.concat(SECTORS_H2,SECTORS_H3,SECTORS_H4).map(s=>({...s,...(formes[s.id]||{})})).concat(extra.filter(e=>!e.zona));
+  sectors = SECTORS_H1.concat(SECTORS_H2,SECTORS_H3,SECTORS_H4,SECTORS_ALTRES).map(s=>({...s,...(formes[s.id]||{})})).concat(extra.filter(e=>!e.zona));
 }
 let sectors = [];
 muntaSectors();
@@ -522,11 +552,11 @@ let stockDataTxt=STOCK_DATA_DATE;
 function carregarCache(){
   try{
     const c=JSON.parse(localStorage.getItem(CACHE_KEY)||'{}');
-    if(Array.isArray(c.lots)) lots=c.lots;
+    if(Array.isArray(c.lots)) lots=c.lots.map(l=>({...l,sector:aliesSector(l.sector)}));
     if(Array.isArray(c.extra)) extra=c.extra;
     if(c.formes) formes=c.formes;
     muntaSectors();
-    if(c.asig) stockAsignacions=c.asig;
+    if(c.asig) Object.entries(c.asig).forEach(([nom,ll])=>{const m={};ll.forEach(x=>{const sc=aliesSector(x.sector);m[sc]=(m[sc]||0)+x.unitats;});stockAsignacions[nom]=Object.entries(m).map(([sector,unitats])=>({sector,unitats}));});
     if(c.stock&&c.stock.items){Object.keys(STOCK_DATA).forEach(k=>delete STOCK_DATA[k]);Object.assign(STOCK_DATA,c.stock.items);stockDataTxt=c.stock.data||'—';}
   }catch(e){}
   treureNoPlanta(STOCK_DATA);
@@ -537,7 +567,7 @@ let _tConn=null;
 function posarConn(ok){
   const b=document.getElementById('badge');
   clearTimeout(_tConn);
-  if(ok){b.classList.remove('off');b.textContent='H1–H7 · v5.19';return;}
+  if(ok){b.classList.remove('off');b.textContent='H1–H7 · v5.21';return;}
   _tConn=setTimeout(()=>{b.classList.add('off');b.textContent='⚠ Sense connexió';},3000);
 }
 function stockDeSector(id){const r=[];Object.entries(stockAsignacions).forEach(([nom,asigs])=>{asigs.forEach(a=>{if(a.sector===id)r.push({nom,unitats:a.unitats});});});return r;}
@@ -587,6 +617,8 @@ function reconstruirEspecies(){
 // Guardar totes les opcions del select per filtrar
 let totsOpcions = [];
 window.addEventListener('load',()=>{
+  iniciPanell();
+  matchMedia('(orientation: landscape)').addEventListener('change',iniciPanell);
   ajustarSVG();
   // fd eliminat (formulari +Lot suprimit)
   actualitzarSelects();
@@ -691,14 +723,10 @@ function render(){
     if(nArt>0)poly.classList.add('occ');
     const cx=s.cx||s.x+s.w/2,cy=s.cy||s.y+s.h/2;
     const t=document.createElementNS('http://www.w3.org/2000/svg','text');
-    t.setAttribute('x',cx);t.setAttribute('y',cy-(nArt>0?4:0));t.setAttribute('class','sl');
+    t.setAttribute('x',cx);t.setAttribute('y',cy);t.setAttribute('class','sl');
     t.textContent=etiqueta(s.id);
+    if(t.textContent.length>8)t.style.fontSize='6px';
     g.appendChild(poly);g.appendChild(t);
-    if(nArt>0){
-      const t2=document.createElementNS('http://www.w3.org/2000/svg','text');
-      t2.setAttribute('x',cx);t2.setAttribute('y',cy+5);t2.setAttribute('class','sl2');
-      t2.textContent=nArt;g.appendChild(t2);
-    }
     sv.appendChild(g);
   });
   // Sectors tancats: un sol bloc de color i una sola etiqueta (S5…); les zones sense sectors no en porten
@@ -715,13 +743,8 @@ function render(){
     if(!/^H\d+$/.test(gr)){
       const x=t.cx/t.n,y=t.cy/t.n;
       const tx=document.createElementNS('http://www.w3.org/2000/svg','text');
-      tx.setAttribute('x',x);tx.setAttribute('y',y-(t.art?4:0));tx.setAttribute('class','slg');
+      tx.setAttribute('x',x);tx.setAttribute('y',y);tx.setAttribute('class','slg');
       tx.textContent=gr.replace(/^H\d+-/,'');g.appendChild(tx);
-      if(t.art){
-        const t2=document.createElementNS('http://www.w3.org/2000/svg','text');
-        t2.setAttribute('x',x);t2.setAttribute('y',y+8);t2.setAttribute('class','sl2');
-        t2.textContent=t.art;g.appendChild(t2);
-      }
     }
     sv.appendChild(g);
   });
@@ -955,7 +978,9 @@ function desferForma(){
 function restauraForma(){
   if(!editSec||!potDesar()||!confirm('Tornar el sector '+editSec+' a la forma original del plànol?'))return;
   delete formes[editSec];vSel=null;
-  fbUpdate('sectors_forma',{[fbClau(editSec)]:null}).catch(err=>notif('⚠️ No s\'ha pogut desar: '+err.message));
+  const esb={[fbClau(editSec)]:null};
+  Object.entries(ALIES_SECTOR).forEach(([vell,nouId])=>{if(nouId===editSec)esb[fbClau(vell)]=null;});
+  fbUpdate('sectors_forma',esb).catch(err=>notif('⚠️ No s\'ha pogut desar: '+err.message));
   desarCache('formes',formes);
   muntaSectors();render();izForma();
 }
@@ -1114,6 +1139,7 @@ function grupDe(s){
 }
 // Etiqueta curta, la mateixa que surt al plànol
 function etiqueta(id){
+  if(id==='ZP')return 'Zona de plantació';
   const zp=id.match(/^(H\d+)-S(\d+)$/);
   if(zp&&ZONES_PASSADISSOS.has(zp[1]))return zp[2];
   const zpp=id.match(/^H\d+-P(\d+)$/); // passadissos de zones sense sectors (H2-P1…): només el número
@@ -1154,7 +1180,7 @@ function urlQR(codi){return 'https://'+domini()+'/?s='+encodeURIComponent(codi);
 function llistaPlaques(){
   const ordre=(a,b)=>a.localeCompare(b,'ca',{numeric:true});
   const grups=new Map(),solts=[];
-  sectors.forEach(s=>{const g=grupDe(s);if(g){if(!grups.has(g))grups.set(g,[]);grups.get(g).push(s.id);}else solts.push(s.id);});
+  sectors.forEach(s=>{if(SECTORS_ALTRES.some(a=>a.id===s.id))return;const g=grupDe(s);if(g){if(!grups.has(g))grups.set(g,[]);grups.get(g).push(s.id);}else solts.push(s.id);});
   const zona=c=>(c.match(/^(H\d+)/)||[])[1]||'';
   const num=c=>zona(c)?c.slice(zona(c).length).replace(/^-/,'').replace(/^S(?=\d)/,''):c;
   const P=[];
@@ -1684,6 +1710,22 @@ function ressaltar(id){
 // ── FORMULARI NOU LOT ─────────────────────────────────────
 
 // ── NOU SECTOR ────────────────────────────────────────────
+// Mòbil: panell lateral plegable i eines d'edició amagades (estat recordat al dispositiu)
+const esMobil=()=>matchMedia('(max-width: 700px) and (orientation: portrait), (max-height: 500px) and (orientation: landscape)').matches;
+function commutaPanell(){
+  const off=document.body.classList.toggle('sb-off');
+  try{localStorage.setItem('solso_panell_'+(innerWidth>innerHeight?'h':'v'),off?'0':'1');}catch(e){}
+}
+function commutaEdicio(){
+  const on=document.body.classList.toggle('edita');
+  if(!on&&mode!=='v'&&mode!=='mou')setMode('v');
+}
+function iniciPanell(){
+  let v=null;try{v=localStorage.getItem('solso_panell_'+(innerWidth>innerHeight?'h':'v'));}catch(e){}
+  // Per defecte: en horitzontal el panell plegat (més plànol); en vertical, obert
+  const off=v===null?(innerWidth>innerHeight):v==='0';
+  document.body.classList.toggle('sb-off',esMobil()&&off);
+}
 function setMode(m){mode=m;mouContext=null;coordPt=null;document.getElementById('bv').classList.toggle('actiu',m==='v');document.getElementById('be').classList.toggle('actiu',m==='e');document.getElementById('bc').classList.toggle('actiu',m==='c');document.getElementById('ba').classList.toggle('actiu',m==='a');document.getElementById('bp').classList.toggle('actiu',m==='p');editSec=null;vSel=null;pasPts=[];nsPts=[];grupObert=null;document.getElementById('iz').textContent=m==='v'?TXT_V:m==='e'?'':'📍 Clica al plànol per obtenir coordenades';if(m==='a')izForma();if(m==='p')izPas();if(m==='e')izNS();render();tancarPop();}
 function svgPt(e){const sv=document.getElementById('sv'),pt=sv.createSVGPoint();pt.x=e.clientX;pt.y=e.clientY;return pt.matrixTransform(sv.getScreenCTM().inverse());}
 
@@ -2131,7 +2173,7 @@ function fbUpdate(path, val) { return db.ref(path).update(val); }
 // Escoltadors en temps real
 db.ref('lots').on('value', (snap) => {
   lots = [];
-  snap.forEach(child => { lots.push({...child.val(), _fbKey: child.key}); });
+  snap.forEach(child => { const v = child.val() || {}; lots.push({...v, sector: aliesSector(v.sector), _fbKey: child.key}); });
   desarCache('lots', lots);
   if (!fbCarregat) {
     fbCarregat = true;
@@ -2162,7 +2204,7 @@ db.ref('stock_asig').on('value', (snap) => {
     const perSector = {};
     Object.values(asigs || {}).forEach(a => {
       const u = parseInt(a && a.unitats) || 0;
-      if (a && a.sector && u > 0) perSector[a.sector] = (perSector[a.sector] || 0) + u;
+      if (a && a.sector && u > 0) { const sc = aliesSector(a.sector); perSector[sc] = (perSector[sc] || 0) + u; }
     });
     const llista = Object.entries(perSector).map(([sector, unitats]) => ({sector, unitats}));
     if (llista.length) nou[fbNom(clau)] = llista;
@@ -2177,6 +2219,7 @@ db.ref('sectors_forma').on('value', (snap) => {
   if (arrForma) return; // no es trepitja un arrossegament en curs; el desat posterior ho reenvia
   const nou = {};
   Object.entries(snap.val() || {}).forEach(([clau, f]) => { if (f && f.pts) nou[fbNom(clau)] = {pts: f.pts, cx: f.cx, cy: f.cy}; });
+  Object.entries(ALIES_SECTOR).forEach(([vell, nouId]) => { if (nou[vell] && !nou[nouId]) nou[nouId] = nou[vell]; delete nou[vell]; });
   formes = nou;
   desarCache('formes', formes);
   muntaSectors();
