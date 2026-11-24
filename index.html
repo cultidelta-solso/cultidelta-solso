@@ -270,7 +270,7 @@
     <h1>Localitzador de plantes</h1>
     <span class="cap-sub">Centre de producció Solsó</span>
   </div>
-  <div class="badge" id="badge">H1–H7 · v5.30</div>
+  <div class="badge" id="badge">H1–H7 · v5.31</div>
 </header>
 <div class="app">
   <div class="sb">
@@ -612,7 +612,7 @@ function carregarCache(){
 }
 carregarCache(); // abans que arribi res de Firebase
 // ── SENSE COBERTURA ──────────────────────────────────────
-const VERSIO_APP='v5.30';
+const VERSIO_APP='v5.31';
 // Canvis fets que Firebase encara no ha confirmat. Es guarden al dispositiu i es tornen a enviar
 // en obrir l'app si es va tancar abans de recuperar la cobertura.
 const PEND_KEY='solso_pendents_v1';
@@ -929,8 +929,8 @@ function render(){
   [H2_SEP1,H2_SEP2].forEach(v=>{if(!v)return;const l=document.createElementNS('http://www.w3.org/2000/svg','line');const [p1,p2]=v.split(' ');const [x1,y1]=p1.split(',');const [x2,y2]=p2.split(',');l.setAttribute('x1',x1);l.setAttribute('y1',y1);l.setAttribute('x2',x2);l.setAttribute('y2',y2);l.setAttribute('stroke','#fff');l.setAttribute('stroke-width','1');l.setAttribute('opacity','0.5');sv.appendChild(l);});
   const lbl2=document.createElementNS('http://www.w3.org/2000/svg','text');
   lbl2.setAttribute('x',827);lbl2.setAttribute('y',268);
-  lbl2.setAttribute('font-family','IBM Plex Mono,monospace');lbl2.setAttribute('font-size','9');
-  lbl2.setAttribute('font-weight','700');lbl2.setAttribute('fill','#c0392b');
+  lbl2.setAttribute('font-family','IBM Plex Mono,monospace');lbl2.setAttribute('font-size','11');
+  lbl2.setAttribute('font-weight','700');lbl2.setAttribute('fill','#1d5a3b');
   lbl2.setAttribute('text-anchor','middle');lbl2.setAttribute('paint-order','stroke');
   lbl2.setAttribute('stroke','white');lbl2.setAttribute('stroke-width','3');lbl2.setAttribute('pointer-events','none');
   lbl2.textContent='H2';sv.appendChild(lbl2);
