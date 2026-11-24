@@ -4,8 +4,8 @@
   "description": "Localitzador de plantes — Zona Solsó",
   "start_url": "/cultidelta-solso/",
   "display": "standalone",
-  "background_color": "#0F6E56",
-  "theme_color": "#0F6E56",
+  "background_color": "#ffffff",
+  "theme_color": "#1d5a3b",
   "orientation": "any",
   "icons": [
     {
