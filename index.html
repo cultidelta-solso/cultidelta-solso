@@ -270,7 +270,7 @@
     <h1>Localitzador de plantes</h1>
     <span class="cap-sub">Centre de producció Solsó</span>
   </div>
-  <div class="badge" id="badge">H1–H7 · v5.28</div>
+  <div class="badge" id="badge">H1–H7 · v5.29</div>
 </header>
 <div class="app">
   <div class="sb">
@@ -551,6 +551,24 @@ let sectors = [];
 muntaSectors();
 let lots = [];
 let stockAsignacions = {};
+// ── UBICACIONS PER PASSADÍS (v5.29) ──────────────────────
+// Format nou:  ubicacions/{passadís}/{article} = unitats → cada canvi toca només un article dins d'un passadís.
+// Format antic: stock_asig/{article} = [{sector,unitats}…] → es reescrivia la llista sencera de l'article.
+// Un cop migrat, stock_asig ja no s'escriu i queda com a còpia de seguretat.
+let asigBase = {};   // nom → {sector: unitats}: l'últim estat conegut de Firebase (amb els canvis propis inclosos)
+let ubicNou = false; // true quan les ubicacions ja són al format nou
+function baseDeLlista(sa){const b={};Object.entries(sa).forEach(([nom,ll])=>{const m={};(ll||[]).forEach(x=>{const u=parseInt(x.unitats)||0;if(x.sector&&u>0)m[x.sector]=(m[x.sector]||0)+u;});if(Object.keys(m).length)b[nom]=m;});return b;}
+function llistaDeBase(b){const r={};Object.entries(b).forEach(([nom,m])=>{r[nom]=Object.entries(m).map(([sector,unitats])=>({sector,unitats}));});return r;}
+// Diferències entre dos estats → actualització per passadís (només el que ha canviat)
+function difUbic(a,b,upd){
+  new Set([...Object.keys(a),...Object.keys(b)]).forEach(nom=>{
+    const x=a[nom]||{},y=b[nom]||{};
+    new Set([...Object.keys(x),...Object.keys(y)]).forEach(sec=>{
+      if((x[sec]||0)!==(y[sec]||0)) upd[fbClau(sec)+'/'+fbClau(nom)]=y[sec]||null;
+    });
+  });
+  return upd;
+}
 let fbCarregat = false;
 let fbOK = false; // true quan Firebase s'ha inicialitzat
 
@@ -583,13 +601,15 @@ function carregarCache(){
     if(c.formes) formes=c.formes;
     muntaSectors();
     if(c.asig) Object.entries(c.asig).forEach(([nom,ll])=>{const m={};ll.forEach(x=>{const sc=aliesSector(x.sector);m[sc]=(m[sc]||0)+x.unitats;});stockAsignacions[nom]=Object.entries(m).map(([sector,unitats])=>({sector,unitats}));});
+    ubicNou=!!c.ubicNou;
+    asigBase=baseDeLlista(stockAsignacions);
     if(c.stock&&c.stock.items){Object.keys(STOCK_DATA).forEach(k=>delete STOCK_DATA[k]);Object.assign(STOCK_DATA,c.stock.items);stockDataTxt=c.stock.data||'—';}
   }catch(e){}
   treureNoPlanta(STOCK_DATA);
 }
 carregarCache(); // abans que arribi res de Firebase
 // ── SENSE COBERTURA ──────────────────────────────────────
-const VERSIO_APP='v5.28';
+const VERSIO_APP='v5.29';
 // Canvis fets que Firebase encara no ha confirmat. Es guarden al dispositiu i es tornen a enviar
 // en obrir l'app si es va tancar abans de recuperar la cobertura.
 const PEND_KEY='solso_pendents_v1';
@@ -629,6 +649,7 @@ function posarConn(ok){
     if(avisOffline){avisOffline=false;notif('✓ Torna a haver-hi connexió'+(pendents.length?' · enviant els canvis':''));}
     pintaBadge();
     if(typeof reenviaPendents==='function')reenviaPendents();
+    if(typeof provaMigrarUbic==='function')provaMigrarUbic();
     return;
   }
   _tConn=setTimeout(()=>{
@@ -649,13 +670,17 @@ function potDesar(){
 }
 // Desa a Firebase només els articles indicats (no tot el node)
 function desarAsig(noms){
-  const upd={};
+  const nou={},vell={};
   noms.forEach(nom=>{
-    const a=stockAsignacions[nom];
-    if(a&&a.length) upd[fbClau(nom)]=a.map(x=>({sector:x.sector,unitats:x.unitats}));
-    else{delete stockAsignacions[nom];upd[fbClau(nom)]=null;}
+    vell[nom]=asigBase[nom]||{};
+    const m=baseDeLlista({[nom]:stockAsignacions[nom]||[]})[nom];
+    if(m){nou[nom]=m;asigBase[nom]=m;stockAsignacions[nom]=llistaDeBase({[nom]:m})[nom];}
+    else{delete asigBase[nom];delete stockAsignacions[nom];}
   });
-  fbUpdate('stock_asig',upd).catch(err=>notif('⚠️ No s\'ha pogut desar: '+err.message));
+  let upd={},node;
+  if(ubicNou){node='ubicacions';difUbic(vell,nou,upd);}
+  else{node='stock_asig';noms.forEach(nom=>{upd[fbClau(nom)]=nou[nom]?llistaDeBase({[nom]:nou[nom]})[nom]:null;});}
+  if(Object.keys(upd).length) fbUpdate(node,upd).catch(err=>notif('⚠️ No s\'ha pogut desar: '+err.message));
   desarCache('asig',stockAsignacions);
   refrescarVistes();
 }
@@ -2340,6 +2365,7 @@ auth.onAuthStateChanged(async (u) => {
   }
   pintaSessio();
   reenviaPendents();
+  provaMigrarUbic();
 });
 function pintaSessio() {
   const b = document.getElementById('bus');
@@ -2420,22 +2446,80 @@ db.ref('sectors_extra').on('value', (snap) => {
   avisMigracio();
 });
 
-db.ref('stock_asig').on('value', (snap) => {
-  // Claus descodificades (fbNom) i entrades repetides del mateix sector sumades
-  const nou = {};
-  Object.entries(snap.val() || {}).forEach(([clau, asigs]) => {
-    const perSector = {};
+// ── UBICACIONS: format per passadís, migració des de stock_asig i pont amb versions antigues ──
+let infoUbic, snapAntic = null, snapNou = null, migrantUbic = false, ubicDenegat = false;
+// Format antic → {nom: {sector: unitats}} (claus descodificades i sectors repetits sumats)
+function baseDeAntic(v) {
+  const b = {};
+  Object.entries(v || {}).forEach(([clau, asigs]) => {
+    const m = {};
     Object.values(asigs || {}).forEach(a => {
       const u = parseInt(a && a.unitats) || 0;
-      if (a && a.sector && u > 0) { const sc = aliesSector(a.sector); perSector[sc] = (perSector[sc] || 0) + u; }
+      if (a && a.sector && u > 0) { const sc = aliesSector(a.sector); m[sc] = (m[sc] || 0) + u; }
     });
-    const llista = Object.entries(perSector).map(([sector, unitats]) => ({sector, unitats}));
-    if (llista.length) nou[fbNom(clau)] = llista;
+    if (Object.keys(m).length) b[fbNom(clau)] = m;
   });
-  stockAsignacions = nou;
-  desarCache('asig', nou);
+  return b;
+}
+// Format nou → {nom: {sector: unitats}}
+function baseDeNou(v) {
+  const b = {};
+  Object.entries(v || {}).forEach(([cs, arts]) => {
+    const sc = aliesSector(fbNom(cs));
+    Object.entries(arts || {}).forEach(([ca, u]) => {
+      u = parseInt(u) || 0; if (u <= 0) return;
+      const nom = fbNom(ca); (b[nom] = b[nom] || {})[sc] = (b[nom][sc] || 0) + u;
+    });
+  });
+  return b;
+}
+function aplicaUbic() {
+  if (infoUbic === undefined) return; // encara no se sap en quin format són
+  ubicNou = !!(infoUbic && infoUbic.migrat);
+  const v = ubicNou ? snapNou : snapAntic;
+  if (v === null) return;
+  asigBase = ubicNou ? baseDeNou(v) : baseDeAntic(v);
+  stockAsignacions = llistaDeBase(asigBase);
+  desarCache('asig', stockAsignacions); desarCache('ubicNou', ubicNou);
   refrescarVistes();
+}
+// Migració: la fa una sola vegada el primer editor que obre l'app amb cobertura. Una sola escriptura (tot o res).
+async function provaMigrarUbic() {
+  if (migrantUbic || ubicDenegat || infoUbic === undefined || (infoUbic && infoUbic.migrat) || snapAntic === null || !usuari || !esEditor || !connectat) return;
+  migrantUbic = true;
+  try {
+    const base = baseDeAntic(snapAntic), dades = {};
+    let n = 0, u = 0;
+    Object.entries(base).forEach(([nom, m]) => Object.entries(m).forEach(([sec, ut]) => {
+      (dades[fbClau(sec)] = dades[fbClau(sec)] || {})[fbClau(nom)] = ut; n++; u += ut;
+    }));
+    await db.ref().update({
+      'ubicacions': dades,
+      'ubicacions_info': {migrat: firebase.database.ServerValue.TIMESTAMP, per: usuari.email, versio: VERSIO_APP,
+                          articles: Object.keys(base).length, ubicacions: n, unitats: u}
+    });
+    notif(`✓ Ubicacions passades al format per passadís (${n} ubicacions, ${u.toLocaleString()} ut.)`);
+  } catch (err) {
+    if (/permission/i.test(err.message)) { ubicDenegat = true; notif('⚠️ Firebase no deixa crear el node «ubicacions»: cal afegir-lo a les regles. De moment es continua amb el format antic.'); }
+    else notif('⚠️ No s\'han pogut passar les ubicacions al format nou: ' + err.message);
+  } finally { migrantUbic = false; }
+}
+// Pont: si un dispositiu amb una versió antiga (abans de v5.29) escriu a stock_asig, el canvi es passa al format nou
+function pontAntic(prev, v) {
+  if (prev === null || !ubicNou || !usuari || !esEditor || !connectat) return;
+  const upd = difUbic(baseDeAntic(prev), baseDeAntic(v), {});
+  if (!Object.keys(upd).length) return;
+  fbUpdate('ubicacions', upd).catch(() => {});
+  notif('ℹ️ Un dispositiu amb una versió antiga ha canviat ubicacions: s\'han passat al format nou. Cal recarregar-lo.');
+}
+db.ref('ubicacions_info').on('value', (snap) => { infoUbic = snap.val() || null; aplicaUbic(); provaMigrarUbic(); },
+  () => { ubicDenegat = true; infoUbic = null; aplicaUbic(); }); // sense regla a Firebase: format antic
+db.ref('stock_asig').on('value', (snap) => {
+  const v = snap.val() || {};
+  pontAntic(snapAntic, v);
+  snapAntic = v; aplicaUbic(); provaMigrarUbic();
 });
+db.ref('ubicacions').on('value', (snap) => { snapNou = snap.val() || {}; aplicaUbic(); }, () => { snapNou = null; });
 
 // Stock importat per CSV (compartit entre dispositius). Si no n'hi ha, es manté el stock incrustat al fitxer.
 db.ref('sectors_forma').on('value', (snap) => {
