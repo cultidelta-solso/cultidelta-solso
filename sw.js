@@ -7,7 +7,7 @@
  *  - Les dades de Firebase (base de dades i sessió de Google) NO passen per aquí: les gestiona la pàgina.
  * En publicar una versió nova de l'app, cal canviar VERSIO perquè es renovi la còpia.
  */
-const VERSIO = 'solso-v5.31';
+const VERSIO = 'solso-v5.32';
 const INDEX = new URL('./index.html', self.registration.scope).href;
 
 const PROPIS = ['./', './index.html', './orto.jpg', './manifest.json', './icon-192.png', './icon-512.png']
